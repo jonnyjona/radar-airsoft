@@ -80,6 +80,15 @@ select, .toolbar input[type=number] { padding: 5px 8px; border: 1px solid var(--
 code { font: 13px var(--mono); background: var(--bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere }
 dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 14px }
 dt { color: var(--muted) } dd { margin: 0 }
+.livebar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center }
+.btn { padding: 8px 16px; border-radius: 6px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-fg); font-weight: 600; cursor: pointer; white-space: nowrap }
+.btn:disabled { opacity: .55; cursor: default }
+details.card summary { cursor: pointer }
+.steps { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: 14px }
+.livehead { padding: 10px 16px; font: 600 15px var(--display); text-transform: uppercase; letter-spacing: .05em; background: var(--good-bg); color: var(--good) }
+.was { font-size: 12px; color: var(--muted) }
+.spin { display: inline-block; width: 11px; height: 11px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; margin-right: 6px; vertical-align: -1px }
+@media (prefers-reduced-motion: no-preference) { .spin { animation: rot 1s linear infinite } @keyframes rot { to { transform: rotate(360deg) } } }
 .toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-size: 14px; max-width: calc(100% - 32px) }
 @media (max-width: 720px) {
   .row { grid-template-columns: minmax(0,1fr) auto }
@@ -110,6 +119,25 @@ dt { color: var(--muted) } dd { margin: 0 }
   </nav>
 
   <section id="p-buscar" style="display:grid;gap:12px">
+    <div class="livebar">
+      <button class="btn" type="button" id="liveBtn">Precios en vivo</button>
+      <span class="hint" id="liveStatus">Pulsa Intro o el botón para leer ahora mismo los precios de los primeros resultados en cada tienda (tarda alrededor de un minuto).</span>
+    </div>
+    <details class="card" id="liveSetup" hidden>
+      <summary><b>Configurar precios en vivo</b> (una sola vez en este navegador)</summary>
+      <ol class="steps">
+        <li>Abre <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a>.</li>
+        <li>Nombre: <code>Radar en vivo</code>. Caducidad: la que quieras (por ejemplo, 1 año).</li>
+        <li>En <b>Repository access</b> elige <b>Only select repositories</b> → <code>radar-airsoft</code>.</li>
+        <li>En <b>Permissions → Repository permissions</b>: <b>Actions</b> = Read and write, y <b>Contents</b> = Read-only.</li>
+        <li>Pulsa <b>Generate token</b>, cópialo y pégalo aquí:</li>
+      </ol>
+      <div class="toolbar"><input type="password" id="tokIn" placeholder="github_pat_…" autocomplete="off" style="flex:1;min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg)"><button class="btn" type="button" id="tokSave">Guardar</button></div>
+      <p class="hint">La clave se guarda solo en este navegador y solo sirve para lanzar la lectura en tu repositorio. <button class="linkbtn" type="button" id="tokForget">Olvidar la clave</button></p>
+    </details>
+    <div id="liveBox" hidden>
+      <div class="list" id="liveList"></div>
+    </div>
     <div class="toolbar" id="sStores"></div>
     <div class="toolbar">
       <label><input type="checkbox" id="sStock" checked> Solo con stock</label>
@@ -262,8 +290,78 @@ function search() {
   $("sHint").textContent = res.length > 150 ? `Mostrando 150 de ${res.length}. Añade palabras para afinar.` : "";
   bindRows($("results"), search);
 }
-let st; $("q").addEventListener("input", () => { clearTimeout(st); st = setTimeout(search, 80); if (!$("p-buscar").hidden) return; showTab("buscar"); });
-$("sform").addEventListener("submit", e => { e.preventDefault(); search(); });
+let st; $("q").addEventListener("input", () => { if (live && live.q !== $("q").value.trim()) { live = null; $("liveBox").hidden = true; } clearTimeout(st); st = setTimeout(search, 80); if (!$("p-buscar").hidden) return; showTab("buscar"); });
+$("sform").addEventListener("submit", e => { e.preventDefault(); search(); goLive(); });
+
+/* precios en vivo (GitHub Actions bajo demanda) */
+const REPO = "jonnyjona/radar-airsoft", TOK = "radar-gh-token";
+const getTok = () => { try { return localStorage.getItem(TOK) || ""; } catch { return ""; } };
+const setTok = t => { try { t ? localStorage.setItem(TOK, t) : localStorage.removeItem(TOK); } catch {} };
+let live = null;
+function liveStatus(html) { $("liveStatus").innerHTML = html; }
+$("liveBtn").addEventListener("click", () => { search(); goLive(); });
+$("tokSave").addEventListener("click", () => {
+  const t = $("tokIn").value.trim();
+  if (!/^(github_pat_|ghp_)/.test(t)) { toast("Esa clave no parece de GitHub (empieza por github_pat_)."); return; }
+  setTok(t); $("tokIn").value = ""; $("liveSetup").open = false; $("liveSetup").hidden = true;
+  toast("Clave guardada."); if ($("q").value.trim()) goLive();
+});
+$("tokForget").addEventListener("click", () => { setTok(""); toast("Clave borrada de este navegador."); });
+async function goLive() {
+  const q = $("q").value.trim();
+  if (!q) { liveStatus("Escribe primero las palabras clave."); return; }
+  const tok = getTok();
+  if (!tok) { $("liveSetup").hidden = false; $("liveSetup").open = true; liveStatus("Falta configurar la clave de GitHub (abajo)."); return; }
+  const id = (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)).replace(/[^a-z0-9]/g, "");
+  const me = live = { id, q, t0: Date.now() };
+  $("liveBtn").disabled = true;
+  liveStatus('<span class="spin"></span>Pidiendo la lectura a GitHub…');
+  const H = { Authorization: "Bearer " + tok, Accept: "application/vnd.github+json" };
+  try {
+    const r = await fetch(`https://api.github.com/repos/${REPO}/actions/workflows/live.yml/dispatches`, {
+      method: "POST", headers: { ...H, "Content-Type": "application/json" }, body: JSON.stringify({ ref: "main", inputs: { query: q, id } }) });
+    if (r.status === 401) { liveStatus("GitHub no acepta la clave (¿ha caducado?). Vuelve a configurarla."); $("liveSetup").hidden = false; $("liveSetup").open = true; return; }
+    if (r.status === 403 || r.status === 404) { liveStatus("La clave no tiene permiso para lanzar la lectura. Revisa que tenga Actions: Read and write en radar-airsoft."); $("liveSetup").hidden = false; return; }
+    if (!r.ok) { liveStatus("GitHub no pudo lanzar la lectura (" + r.status + "). Prueba otra vez en un momento."); return; }
+  } catch { liveStatus("Sin conexión con GitHub. Prueba otra vez."); return; }
+  finally { $("liveBtn").disabled = false; }
+  while (live === me && Date.now() - me.t0 < 240000) {
+    liveStatus(`<span class="spin"></span>Leyendo precios en las tiendas… ${Math.round((Date.now() - me.t0) / 1000)} s`);
+    await new Promise(res => setTimeout(res, 4000));
+    if (live !== me) return;
+    try {
+      const r = await fetch(`https://api.github.com/repos/${REPO}/contents/live/${id}.json?ref=live`, { headers: { ...H, Accept: "application/vnd.github.raw+json" }, cache: "no-store" });
+      if (r.ok) { renderLive(await r.json()); return; }
+    } catch {}
+  }
+  if (live === me) liveStatus("La lectura está tardando más de lo normal. Puedes volver a intentarlo.");
+}
+function renderLive(res) {
+  const ok = res.items.filter(i => i.ok);
+  const secs = Math.round((Date.now() - live.t0) / 1000);
+  if (!res.items.length) {
+    liveStatus(`No hay productos del catálogo con «${esc(res.query)}», así que no había fichas que leer.`);
+    $("liveBox").hidden = true; return;
+  }
+  liveStatus(`Precios leídos ahora (${secs} s): ${ok.length} de ${res.items.length} fichas. Abajo, el resto del catálogo.`);
+  const inStock = ok.filter(i => i.k !== 0);
+  const best = inStock.length ? Math.min(...inStock.map(i => i.p)) : null;
+  $("liveBox").hidden = false;
+  $("liveList").innerHTML = `<div class="livehead">En vivo · ${new Date(res.finishedAt).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}</div>` +
+    res.items.map(i => {
+      const stock = i.k === 0 ? '<span class="pill bad">Sin stock</span>' : i.k === 1 ? '<span class="pill good">En stock</span>' : "";
+      const p = i.r && i.p && i.r > i.p ? Math.round(100 * (1 - i.p / i.r)) : 0;
+      const diff = i.ok && Math.abs(i.p - i.catalog) >= 0.01 ? `<div class="was">catálogo: ${eur(i.catalog)}</div>` : "";
+      return `<article class="row ${i.ok && i.p === best ? "best" : ""}">
+        <div class="store">${esc(STORE_NAMES[i.s] || i.s)}</div>
+        <div class="name"><a href="${esc(safe(i.u))}" target="_blank" rel="noopener">${esc(i.n)}</a>
+          <div class="meta">${stock}${p ? `<span class="pct">−${p} %</span>` : ""}${i.note ? `<span>${esc(i.note)}</span>` : ""}
+          <button class="linkbtn" type="button" data-follow="${esc(i.u)}">Seguir</button></div></div>
+        <div class="price"><div class="now">${i.ok ? eur(i.p) : "—"}</div>${i.r && i.r > (i.p || 0) ? `<s>${eur(i.r)}</s>` : ""}${diff}</div>
+      </article>`;
+    }).join("");
+  bindRows($("liveList"), () => {});
+}
 $("sStock").addEventListener("change", search); $("sSort").addEventListener("change", search);
 
 /* ofertas */

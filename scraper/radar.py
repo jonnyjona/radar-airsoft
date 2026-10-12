@@ -504,12 +504,60 @@ def run_bot(data_dir):
     return changed
 
 
+# ---------------------------------------------------------------- precios en vivo
+
+def run_live(data_dir, query, req_id, out_path):
+    """Lee ahora mismo las fichas de los productos del catálogo que coinciden con la búsqueda."""
+    catalog = load(data_dir, "catalog.json", {"items": []})
+    res, total = search_catalog(catalog, query, limit=100000)
+    picked, per = [], {}
+    for it in sorted(res, key=lambda x: (x["k"] == 0, x["p"])):
+        if it["s"] == "taiwangun" or per.get(it["s"], 0) >= 4:
+            continue
+        per[it["s"]] = per.get(it["s"], 0) + 1
+        picked.append(it)
+        if len(picked) >= 16:
+            break
+    groups = {}
+    for it in picked:
+        groups.setdefault(it["s"], []).append(it)
+
+    def work(items):
+        fx, out = Fetcher(), []
+        for it in items:
+            html = fx.get(it["u"])
+            row = {"s": it["s"], "n": it["n"], "u": it["u"], "catalog": it["p"], "p": None, "r": None, "k": None, "ok": False, "note": None}
+            if not html:
+                host = urlsplit(it["u"]).netloc
+                row["note"] = "La tienda no dejó leer la ficha" if fx.blocked.get(host) else f"No se pudo leer ({fx.errors.get(host) or 'error'})"
+            else:
+                info = extract_product(html, it["u"])
+                if info["price"] is None:
+                    row["note"] = "No encontré el precio en la ficha"
+                else:
+                    row.update({"p": info["price"], "r": info["regular"], "k": None if info["inStock"] is None else (1 if info["inStock"] else 0), "ok": True})
+            out.append(row)
+        return out
+
+    rows = []
+    with ThreadPoolExecutor(max_workers=max(1, len(groups))) as pool:
+        for part in pool.map(work, groups.values()):
+            rows.extend(part)
+    rows.sort(key=lambda r: (not r["ok"], r["k"] == 0, r["p"] if r["p"] is not None else r["catalog"]))
+    result = {"id": req_id, "query": query, "finishedAt": now_iso(), "matches": total, "checked": len(rows), "items": rows}
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(result, f, ensure_ascii=False)
+    print(f"En vivo «{query}»: {total} coincidencias en el catálogo, {len(rows)} fichas leídas, {sum(r['ok'] for r in rows)} con precio")
+
+
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "catalog"
     data_dir = sys.argv[2] if len(sys.argv) > 2 else "data"
     t0 = time.time()
     if mode == "catalog":
         run_catalog(data_dir)
+    elif mode == "live":
+        run_live(data_dir, sys.argv[3], sys.argv[4], sys.argv[5])
     elif mode == "bot":
         changed = run_bot(data_dir)
         out = os.environ.get("GITHUB_OUTPUT")

@@ -1,0 +1,55 @@
+name: Radar Airsoft (precio en vivo)
+
+on:
+  workflow_dispatch:
+    inputs:
+      query:
+        description: "Palabras clave"
+        required: true
+      id:
+        description: "Identificador de la petición (lo pone la web)"
+        required: true
+
+run-name: "En vivo: ${{ inputs.query }}"
+
+permissions:
+  contents: write
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            scraper
+            requirements.txt
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -q -r requirements.txt
+
+      - name: Descargar catálogo
+        run: |
+          mkdir -p data
+          git fetch --depth=1 origin data
+          git show FETCH_HEAD:catalog.json > data/catalog.json
+
+      - name: Leer precios ahora
+        env:
+          QUERY: ${{ inputs.query }}
+          REQ_ID: ${{ inputs.id }}
+        run: |
+          case "$REQ_ID" in (*[!a-z0-9]*|"") echo "id no válido"; exit 1;; esac
+          python -u scraper/radar.py live data "$QUERY" "$REQ_ID" result.json
+
+      - name: Publicar resultado
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REQ_ID: ${{ inputs.id }}
+        run: python scraper/publish_live.py result.json "live/${REQ_ID}.json"
