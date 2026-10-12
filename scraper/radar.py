@@ -22,7 +22,8 @@ from fetch import Fetcher  # noqa: E402
 from stores import STORES  # noqa: E402
 
 SITE_URL = os.environ.get("SITE_URL", "https://jonnyjona.github.io/radar-airsoft/")
-MADRID = timezone(timedelta(hours=2))  # aproximado; solo se usa para fechas legibles
+MADRID = timezone(timedelta(hours=2))
+DEBUG_DIR = os.environ.get("RADAR_DEBUG_DIR", "data")  # aproximado; solo se usa para fechas legibles
 
 DEFAULT_SETTINGS = {
     "minDiscount": 20,
@@ -92,6 +93,8 @@ def page_url(cfg, cat, n):
 
 def crawl_store(fx, sid, cfg, log):
     items, methods, pages = {}, {}, 0
+    if cfg.get("delay"):
+        fx.slow[urlsplit(cfg["home"]).netloc] = float(cfg["delay"])
     cats = list(cfg["categories"])
     if cfg.get("discover"):
         for src in (cfg["home"], cfg["categories"][0]):
@@ -127,6 +130,10 @@ def crawl_store(fx, sid, cfg, log):
                     break
                 found, soup, method = extract_listing(html, url, cfg)
             pages += 1
+            if pages == 1 and os.environ.get("RADAR_DEBUG") and soup is not None:
+                os.makedirs(os.path.join(DEBUG_DIR, "debug"), exist_ok=True)
+                with open(os.path.join(DEBUG_DIR, "debug", f"{sid}.html"), "w", encoding="utf-8") as f:
+                    f.write(str(soup))
             new = [it for it in found if it["url"] not in items]
             methods[method] = methods.get(method, 0) + len(new)
             for it in new:
@@ -231,6 +238,7 @@ def run_catalog(data_dir):
     # 4) promociones de portada
     by_id = {p["id"]: p for p in promos.get("items", [])}
     read_ok = set()
+    seen_now = set()
     new_promos = []
     for sid, cfg in STORES.items():
         if not settings["stores"].get(sid, True):
@@ -242,6 +250,7 @@ def run_catalog(data_dir):
                 continue
             got_any = True
             for p in extract_promos(html, url, sid, cfg["product_re"]):
+                seen_now.add(p["id"])
                 if p["id"] in by_id:
                     by_id[p["id"]].update({"lastSeen": d, "active": True, "discount": p["discount"], "url": p["url"]})
                 else:
@@ -251,7 +260,7 @@ def run_catalog(data_dir):
         if got_any:
             read_ok.add(sid)
     for p in by_id.values():
-        if p["store"] in read_ok and p["lastSeen"] != d:
+        if p["store"] in read_ok and p["id"] not in seen_now:
             p["active"] = False
     # olvidar promos inactivas de hace más de 60 días
     cutoff = (datetime.now(MADRID) - timedelta(days=60)).strftime("%Y-%m-%d")

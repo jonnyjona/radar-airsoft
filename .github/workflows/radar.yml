@@ -42,6 +42,7 @@ jobs:
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          RADAR_DEBUG: "1"
         run: python -u scraper/radar.py catalog data 2>&1 | tee run.log; cp run.log data/last-run.log
 
       - name: Guardar datos

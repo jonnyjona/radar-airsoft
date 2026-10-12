@@ -34,6 +34,7 @@ STORES = {
         "page_param": "p",
         "page_start": 1,
         "max_pages": 40,
+        "delay": 6,
     },
     "gunfire": {
         "name": "Gunfire",
@@ -94,7 +95,7 @@ STORES = {
             "https://www.ops-store.com/en/airsoft-promotions-and-clearance-sales-c1291.html",
         ],
         "product_re": r"^https://www\.ops-store\.com/en/[a-z0-9-]*-a\d+\.html$",
-        "page_param": "page",
+        "page_param": "numPage",
         "page_start": 1,
         "max_pages": 30,
     },
