@@ -11,7 +11,7 @@ import sys
 import time
 from datetime import datetime, timezone, timedelta
 from html import escape
-from urllib.parse import urlsplit, urlencode, parse_qsl, urlunsplit
+from urllib.parse import urljoin, urlsplit, urlencode, parse_qsl, urlunsplit
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -94,13 +94,16 @@ def crawl_store(fx, sid, cfg, log):
     items, methods, pages = {}, {}, 0
     cats = list(cfg["categories"])
     if cfg.get("discover"):
-        html = fx.get(cfg["categories"][0])
-        if html:
+        for src in (cfg["home"], cfg["categories"][0]):
+            html = fx.get(src)
+            if not html:
+                continue
             soup = soup_of(html)
             for a in soup.find_all("a", href=True):
-                href = a["href"].split("?")[0]
-                if href.startswith(cfg["discover"]) and re.search(r"-c\d+\.html$", href) and href not in cats:
+                href = urljoin(src, a["href"]).split("?")[0]
+                if href.startswith(cfg["discover"].rstrip("/")) and re.search(r"-c\d+\.html$", href) and href not in cats:
                     cats.append(href)
+        log(f"[{sid}] categorías: {len(cats)}")
     for cat in cats:
         url, n = cat, cfg.get("page_start", 1)
         visited = set()
@@ -180,7 +183,7 @@ def run_catalog(data_dir):
         else:
             prev = old_by_store.get(sid, [])
             all_items.extend(prev)
-            if info.get("blocked"):
+            if info.get("blocked") or str(info.get("error") or "").startswith("HTTP 403"):
                 status, note = "blocked", "La tienda no permite leer su catálogo de forma automática"
             else:
                 status, note = "error", f"No se pudo leer ({info.get('error') or 'sin productos'})"
@@ -238,7 +241,7 @@ def run_catalog(data_dir):
             if not html:
                 continue
             got_any = True
-            for p in extract_promos(html, url, sid):
+            for p in extract_promos(html, url, sid, cfg["product_re"]):
                 if p["id"] in by_id:
                     by_id[p["id"]].update({"lastSeen": d, "active": True, "discount": p["discount"], "url": p["url"]})
                 else:

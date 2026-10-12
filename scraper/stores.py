@@ -80,7 +80,7 @@ STORES = {
         "product_re": r"^https://evike-europe\.com/(?!airsoft-guns|accessories|platforms|exclusive-offers|gear|parts|customer|checkout|catalogsearch)[a-z0-9_-]+\.html$",
         "page_param": "p",
         "page_start": 1,
-        "max_pages": 80,
+        "max_pages": 250,
     },
     "opsstore": {
         "name": "Ops-Store",

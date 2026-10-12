@@ -24,6 +24,7 @@ class Fetcher:
         self._last = {}
         self.blocked = {}   # host -> nº de URLs saltadas por robots.txt
         self.errors = {}    # host -> último error
+        self.slow = {}      # host -> pausa mínima propia (si la tienda pidió ir más despacio)
 
     def _robot(self, url):
         parts = urlsplit(url)
@@ -32,7 +33,12 @@ class Fetcher:
             rp = urllib.robotparser.RobotFileParser()
             try:
                 r = self.session.get(base + "/robots.txt", timeout=20)
-                if r.status_code >= 400:
+                if r.status_code in (429, 503):
+                    time.sleep(30)
+                    r = self.session.get(base + "/robots.txt", timeout=20)
+                if r.status_code in (429, 503) or r.status_code >= 500:
+                    rp.parse(["User-agent: *", "Disallow: /"])  # sin respuesta clara: no leer
+                elif r.status_code >= 400:
                     rp.parse([])  # sin robots.txt: todo permitido
                 else:
                     rp.parse(r.text.splitlines())
@@ -45,7 +51,7 @@ class Fetcher:
         return self._robot(url).can_fetch(BOT_NAME, url)
 
     def _wait(self, host, url):
-        delay = DEFAULT_DELAY
+        delay = self.slow.get(host, DEFAULT_DELAY)
         try:
             cd = self._robot(url).crawl_delay(BOT_NAME)
             if cd:
@@ -65,12 +71,24 @@ class Fetcher:
         if not self.allowed(url):
             self.blocked[host] = self.blocked.get(host, 0) + 1
             return None
-        self._wait(host, url)
-        try:
-            r = self.session.get(url, headers=headers or {}, timeout=timeout)
-        except requests.RequestException as e:
-            self.errors[host] = f"{type(e).__name__}"
-            return None
+        r = None
+        for attempt in range(3):
+            self._wait(host, url)
+            try:
+                r = self.session.get(url, headers=headers or {}, timeout=timeout)
+            except requests.RequestException as e:
+                self.errors[host] = f"{type(e).__name__}"
+                return None
+            if r.status_code not in (429, 503):
+                break
+            # la tienda pide ir más despacio: esperar lo que diga y bajar el ritmo
+            try:
+                wait = min(120, int(r.headers.get("Retry-After", "0")))
+            except ValueError:
+                wait = 0
+            wait = max(wait, 20 * (attempt + 1))
+            self.slow[host] = max(self.slow.get(host, DEFAULT_DELAY), 6)
+            time.sleep(wait)
         if r.status_code != 200:
             self.errors[host] = f"HTTP {r.status_code}"
             return None

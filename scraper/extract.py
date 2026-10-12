@@ -20,8 +20,15 @@ PCT_RE = re.compile(r"(\d{1,2})\s*%")
 OUT_RE = re.compile(r"agotad|sin stock|fuera de stock|no disponible|out of stock|sold out|not available|unavailable|épuisé|rupture|niedostępn|brak", re.I)
 IN_RE = re.compile(r"en stock|in stock|disponible|available|dostępn|ready to ship|listo para enviar", re.I)
 SALE_RE = re.compile(
-    r"%|rebaj|oferta|promo|descuent|\bsale|sales\b|deal|black ?(friday|week)|cyber|outlet|liquidac|aniversario|"
-    r"soldes|destock|r[ée]duction|gratis|free shipping|cup[oó]n|c[oó]digo|code|hot|markdown|clearance|bons? plans?",
+    r"\d\s*%|\brebaj|\bofertas?\b|\bpromo|\bdescuent|\bsales?\b|\bdeals?\b|black ?(friday|week)|cyber monday|\boutlet\b|liquidac|aniversario|"
+    r"\bsoldes\b|destock|r[ée]duction|env[ií]o gratis|free shipping|\bcup[oó]n|c[oó]digo de descuento|discount code|"
+    r"\bhot deals?\b|markdown|clearance|bons? plans?|\bdto\b",
+    re.I,
+)
+BADGE_RE = re.compile(r"^(-?\d+\s*%|promoci[oó]n\s*-?\d+\s*%?|hot deal.*|nuevo|new|novedad|oferta|sale|-?\d+\s*%.*deal)$", re.I)
+PROMO_NOISE_RE = re.compile(
+    r"^(view|ver|see|show|mostrar)\b|terms|condiciones|current promotions|promotions, deals|\|\s*hobby ?expert|"
+    r"hobbyexpert\.es|^ofertas\s|^outlet\s|subscribe|suscr|newsletter|iniciar sesi|log ?in",
     re.I,
 )
 
@@ -245,16 +252,16 @@ def listing_generic(soup, base, product_re):
             links.setdefault(href, []).append(a)
     items = []
     for href, anchors in links.items():
-        name = ""
+        cands = []
         for a in anchors:
-            name = clean(a.get_text()) or clean(a.get("title"))
-            if not name:
-                img = a.find("img", alt=True)
-                name = clean(img["alt"]) if img else ""
-            if len(name) > 4:
-                break
-        if len(name) < 5:
+            cands += [clean(a.get_text()), clean(a.get("title"))]
+            img = a.find("img", alt=True)
+            if img is not None:
+                cands.append(clean(img["alt"]))
+        cands = [c for c in cands if len(c) > 4 and not BADGE_RE.search(c)]
+        if not cands:
             continue
+        name = max(cands, key=len)
         # subir hasta la tarjeta: el ancestro con precio que no contenga otros productos
         node, card = anchors[0], None
         for _ in range(7):
@@ -352,18 +359,21 @@ def extract_product(html, url):
 NAV_WORDS = {"ofertas", "outlet", "promociones", "promotions", "sale", "sales", "rebajas", "novedades", "deals", "hot deals"}
 
 
-def extract_promos(html, base, store_id):
+def extract_promos(html, base, store_id, product_re=None):
     soup = soup_of(html)
-    for t in soup.select("nav, header nav, footer, .navigation, .nav, .menu, #menu, .breadcrumbs, .breadcrumb"):
+    for t in soup.select("nav, header nav, footer, .navigation, .nav, .menu, #menu, .breadcrumbs, .breadcrumb, form"):
         t.decompose()
+    prod = re.compile(product_re) if product_re else None
     found = {}
 
     def add(text, href):
         text = clean(text)
-        if not (8 <= len(text) <= 160) or not SALE_RE.search(text):
+        if not (8 <= len(text) <= 160) or not SALE_RE.search(text) or PROMO_NOISE_RE.search(text):
             return
-        if norm(text) in NAV_WORDS or len(text.split()) < 3:
+        if norm(text) in NAV_WORDS or len(text.split()) < 3 or BADGE_RE.search(text):
             return
+        if href and prod and prod.match(urldefrag(urljoin(base, href))[0].split("?")[0]):
+            return  # es una ficha de producto, no una campaña
         key = norm(text)
         if key in found:
             return
@@ -380,8 +390,6 @@ def extract_promos(html, base, store_id):
         img = a.find("img")
         if img is not None:
             add(img.get("alt") or img.get("title") or "", a["href"])
-        if a.get("title"):
-            add(a["title"], a["href"])
         add(a.get_text(" "), a["href"])
     for h in soup.find_all(["h1", "h2", "h3", "h4", "strong"]):
         a = h.find_parent("a") or h.find("a")
