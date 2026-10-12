@@ -9,6 +9,7 @@ import os
 import re
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone, timedelta
 from html import escape
 from urllib.parse import urljoin, urlsplit, urlencode, parse_qsl, urlunsplit
@@ -130,6 +131,7 @@ def crawl_store(fx, sid, cfg, log):
                     break
                 found, soup, method = extract_listing(html, url, cfg)
             pages += 1
+            log(f"[{sid}]   {url} → {len(found)} productos ({method})")
             if pages == 1 and os.environ.get("RADAR_DEBUG") and soup is not None:
                 os.makedirs(os.path.join(DEBUG_DIR, "debug"), exist_ok=True)
                 with open(os.path.join(DEBUG_DIR, "debug", f"{sid}.html"), "w", encoding="utf-8") as f:
@@ -172,17 +174,31 @@ def run_catalog(data_dir):
     old_by_store = {}
     for it in old_catalog.get("items", []):
         old_by_store.setdefault(it["s"], []).append(it)
+    def crawl_one(sid):
+        cfg = STORES[sid]
+        try:
+            return crawl_store(Fetcher(), sid, cfg, log)
+        except Exception as e:  # una tienda rota no debe parar las demás
+            log(f"[{sid}] ERROR {type(e).__name__}: {e}")
+            return [], {"count": 0, "error": f"{type(e).__name__}: {e}", "blocked": 0}
+
+    active = [sid for sid in STORES if settings["stores"].get(sid, True)]
+    # cada tienda en su propio hilo: las pausas son por tienda, así que leerlas a la vez no las satura
+    with ThreadPoolExecutor(max_workers=len(active) or 1) as pool:
+        results = dict(zip(active, pool.map(crawl_one, active)))
     for sid, cfg in STORES.items():
-        if not settings["stores"].get(sid, True):
+        if sid not in results:
             store_status[sid] = {"name": cfg["name"], "status": "off", "note": "Desactivada en ajustes", "updated": now_iso()}
             continue
-        try:
-            items, info = crawl_store(fx, sid, cfg, log)
-        except Exception as e:  # una tienda rota no debe parar las demás
-            items, info = [], {"count": 0, "error": f"{type(e).__name__}: {e}", "blocked": 0}
-            log(f"[{sid}] ERROR {info['error']}")
+        items, info = results[sid]
         if items:
             status, note = "ok", cfg.get("note")
+            if info.get("error"):
+                # lectura cortada a medias (p. ej. la tienda pidió ir más despacio): conservar lo de la vez anterior
+                got = {it["url"] for it in items}
+                keep = [o for o in old_by_store.get(sid, []) if o["u"] not in got]
+                all_items.extend(keep)
+                note = ((note + " ") if note else "") + f"Lectura parcial esta vez; {len(keep)} productos vienen de la lectura anterior."
             for it in items:
                 all_items.append({"s": sid, "n": it["name"], "u": it["url"], "p": round(it["price"], 2),
                                   "r": round(it["regular"], 2) if it.get("regular") else None,
@@ -196,7 +212,7 @@ def run_catalog(data_dir):
                 status, note = "error", f"No se pudo leer ({info.get('error') or 'sin productos'})"
             if prev:
                 note += "; se muestran los datos de la última lectura"
-        store_status[sid] = {"name": cfg["name"], "status": status, "note": note, "count": len(items) or len(old_by_store.get(sid, [])),
+        store_status[sid] = {"name": cfg["name"], "status": status, "note": note, "count": sum(1 for x in all_items if x["s"] == sid),
                              "updated": now_iso() if items else (old_catalog.get("stores", {}).get(sid, {}).get("updated")),
                              "debug": info}
 

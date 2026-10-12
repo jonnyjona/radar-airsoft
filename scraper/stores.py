@@ -17,13 +17,6 @@ STORES = {
         "home": "https://www.hobbyexpert.es/",
         "categories": [
             "https://www.hobbyexpert.es/replicas-de-airsoft",
-            "https://www.hobbyexpert.es/replicas-de-airsoft/fusiles-de-asalto-airsoft",
-            "https://www.hobbyexpert.es/replicas-de-airsoft/pistolas-de-airsoft",
-            "https://www.hobbyexpert.es/replicas-de-airsoft/subfusiles-airsoft",
-            "https://www.hobbyexpert.es/replicas-de-airsoft/rifles-de-francotirador-airsoft",
-            "https://www.hobbyexpert.es/replicas-de-airsoft/escopetas-airsoft",
-            "https://www.hobbyexpert.es/replicas-de-airsoft/tirador-selecto-dmr-airsoft",
-            "https://www.hobbyexpert.es/replicas-de-airsoft/apoyo-airsoft",
             "https://www.hobbyexpert.es/hpa-airsoft/unidades-hpa",
         ],
         "promo_pages": [
@@ -33,8 +26,8 @@ STORES = {
         "product_re": r"^https://www\.hobbyexpert\.es/(?!promociones|marcas|replicas-de-airsoft|equipamiento|accesorios|consumibles|internos|outdoor|aire-comprimido|cuchilleria|hpa-airsoft|customer|checkout|wishlist|blog|contact)[a-z0-9-]+$",
         "page_param": "p",
         "page_start": 1,
-        "max_pages": 40,
-        "delay": 6,
+        "max_pages": 70,
+        "delay": 12,
     },
     "gunfire": {
         "name": "Gunfire",
