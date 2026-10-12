@@ -4,6 +4,9 @@ on:
   schedule:
     - cron: "17 */6 * * *"   # cada 6 horas
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["scraper/**", "site/**", "scripts/**", ".github/workflows/radar.yml"]
 
 permissions:
   contents: write
@@ -39,7 +42,7 @@ jobs:
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scraper/radar.py catalog data
+        run: python -u scraper/radar.py catalog data 2>&1 | tee run.log; cp run.log data/last-run.log
 
       - name: Guardar datos
         env:
