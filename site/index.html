@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Radar Airsoft</title>
+<meta name="description" content="Comparador de precios y promociones de tiendas de airsoft.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='8' fill='none' stroke='%233f5a35' stroke-width='2.4'/%3E%3Cpath d='M12 1v6M12 17v6M1 12h6M17 12h6' stroke='%233f5a35' stroke-width='2.4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Una columna de trabajo: barra de búsqueda arriba, pestañas, filas densas como un cuaderno de campo */
+:root {
+  --bg: #eef0ea; --surface: #f9faf6; --line: #d3d8cb; --fg: #1f2620; --muted: #5f6a5c;
+  --accent: #3f5a35; --accent-fg: #f4f7ef; --coyote: #9a7b4f; --tag: #c4621d; --tag-bg: #f8e6d6;
+  --good: #2f7a45; --good-bg: #dcefe0; --warn: #9a6a0b; --warn-bg: #f6ebcf; --bad: #a3392f; --bad-bg: #f6dcd8;
+  --display: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #151a15; --surface: #1d241d; --line: #2f3a2e; --fg: #e3e8dd; --muted: #98a493;
+  --accent: #9dbb86; --accent-fg: #142012; --coyote: #c9a678; --tag: #f0935a; --tag-bg: #3a2618;
+  --good: #8fd3a0; --good-bg: #1e3524; --warn: #e6c26b; --warn-bg: #3a3018; --bad: #f09a90; --bad-bg: #3d1f1c;
+  color-scheme: dark } }
+* { box-sizing: border-box }
+html { padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0) }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 var(--body); padding: 0 16px }
+[hidden] { display: none !important }
+.wrap { max-width: 1000px; margin: 0 auto; padding-block: 20px 56px; display: grid; gap: 16px }
+h1, h2, h3 { font-family: var(--display); margin: 0; text-wrap: balance }
+a { color: var(--accent) }
+button, input, select { font: inherit; color: inherit }
+:focus-visible { outline: 2px solid var(--tag); outline-offset: 2px }
+header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 10px }
+.brand { display: flex; align-items: center; gap: 10px }
+.brand h1 { font-size: 34px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em }
+.brand svg { width: 24px; height: 24px; color: var(--accent) }
+.updated { font: 12.5px var(--mono); color: var(--muted) }
+.searchbar { display: flex; gap: 10px; flex-wrap: wrap; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); position: sticky; top: 0; z-index: 2 }
+.searchbar input { flex: 1; min-width: 0; font-size: 17px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg) }
+nav.tabs { display: flex; gap: 2px; border-bottom: 2px solid var(--line); overflow-x: auto }
+nav.tabs button { background: none; border: 0; padding: 8px 14px; font: 600 17px var(--display); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; white-space: nowrap }
+nav.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent) }
+.count { font: 500 12px var(--mono); margin-left: 4px; color: var(--muted) }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.chip { padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-size: 13.5px; white-space: nowrap }
+.chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent) }
+.toolbar label { font-size: 13.5px; color: var(--muted); display: inline-flex; gap: 6px; align-items: center }
+select, .toolbar input[type=number] { padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface) }
+.list { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden }
+.row { display: grid; grid-template-columns: 110px minmax(0,1fr) auto; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line); align-items: start }
+.row:first-child { border-top: 0 }
+.store { font: 600 13px var(--display); text-transform: uppercase; letter-spacing: .05em; color: var(--coyote); padding-top: 2px; overflow-wrap: anywhere }
+.name { min-width: 0; overflow-wrap: anywhere }
+.name a { color: var(--fg); text-decoration: none; font-weight: 500 } .name a:hover { text-decoration: underline }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-top: 4px; font-size: 12.5px; color: var(--muted) }
+.price { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap }
+.price .now { font-size: 17px; font-weight: 500 }
+.price s { color: var(--muted); font-size: 12.5px }
+.row.best .price .now { color: var(--good) }
+.pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 999px; white-space: nowrap }
+.pill.good { color: var(--good); background: var(--good-bg) } .pill.bad { color: var(--bad); background: var(--bad-bg) }
+.pill.warn { color: var(--warn); background: var(--warn-bg) } .pill.idle { color: var(--muted); background: var(--bg) }
+.pct { font: 500 13px var(--mono); color: var(--tag); background: var(--tag-bg); padding: 1px 7px; border-radius: 3px 10px 10px 3px }
+.linkbtn { background: none; border: 0; padding: 0; color: var(--muted); font-size: 12.5px; text-decoration: underline; cursor: pointer }
+.empty { padding: 28px 18px; text-align: center; color: var(--muted) }
+.empty strong { display: block; color: var(--fg); font: 600 19px var(--display); margin-bottom: 4px }
+.hint { font-size: 13px; color: var(--muted); margin: 0 }
+.spark { display: block; width: 100%; max-width: 360px; height: 56px; margin-top: 8px }
+.spark .grid { stroke: var(--line) } .spark .area { fill: var(--accent); opacity: .12 }
+.spark .ln { fill: none; stroke: var(--accent); stroke-width: 1.8 } .spark .tg { stroke: var(--tag); stroke-dasharray: 3 3 }
+.spark .end { fill: var(--accent) } .spark text { fill: var(--muted); font: 9px var(--mono) }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px }
+.card { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 16px; display: grid; gap: 10px; align-content: start }
+.card h2 { font-size: 20px; text-transform: uppercase; letter-spacing: .05em }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; background: var(--muted); margin-right: 6px }
+.dot.ok { background: var(--good) } .dot.blocked, .dot.error { background: var(--bad) } .dot.off { background: var(--line) }
+code { font: 13px var(--mono); background: var(--bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere }
+dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 14px }
+dt { color: var(--muted) } dd { margin: 0 }
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-size: 14px; max-width: calc(100% - 32px) }
+@media (max-width: 720px) {
+  .row { grid-template-columns: minmax(0,1fr) auto }
+  .row .store { grid-column: 1 / -1; padding: 0 }
+  .grid2 { grid-template-columns: 1fr }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 1v6M12 17v6M1 12h6M17 12h6" stroke="currentColor" stroke-width="2"/></svg>
+      <h1>Radar Airsoft</h1>
+    </div>
+    <div class="updated" id="updated">Cargando datos…</div>
+  </header>
+
+  <form class="searchbar" id="sform" autocomplete="off" role="search">
+    <input id="q" type="search" placeholder="Palabras clave: noveske gbb n4 mws" aria-label="Buscar en el catálogo">
+  </form>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="buscar" aria-selected="true">Buscar<span class="count" id="c-buscar"></span></button>
+    <button role="tab" data-tab="ofertas" aria-selected="false">Ofertas<span class="count" id="c-ofertas"></span></button>
+    <button role="tab" data-tab="seguimiento" aria-selected="false">Seguimiento<span class="count" id="c-seg"></span></button>
+    <button role="tab" data-tab="tiendas" aria-selected="false">Tiendas y avisos</button>
+  </nav>
+
+  <section id="p-buscar" style="display:grid;gap:12px">
+    <div class="toolbar" id="sStores"></div>
+    <div class="toolbar">
+      <label><input type="checkbox" id="sStock" checked> Solo con stock</label>
+      <label>Ordenar <select id="sSort"><option value="price">Precio más bajo</option><option value="pct">Mayor descuento</option><option value="name">Nombre</option></select></label>
+    </div>
+    <div class="list" id="results"><div class="empty"><strong>Busca una réplica</strong>Escribe palabras clave arriba. Solo salen productos que las tengan todas, del más barato al más caro.</div></div>
+    <p class="hint" id="sHint"></p>
+  </section>
+
+  <section id="p-ofertas" hidden style="display:grid;gap:14px">
+    <h2 style="font-size:20px;text-transform:uppercase;letter-spacing:.05em">Campañas en las tiendas</h2>
+    <div class="list" id="campaigns"></div>
+    <h2 style="font-size:20px;text-transform:uppercase;letter-spacing:.05em">Réplicas rebajadas</h2>
+    <div class="toolbar" id="dStores"></div>
+    <div class="toolbar"><label>Descuento mínimo <input type="number" id="dMin" min="0" max="90" step="5" value="15" style="width:70px"> %</label></div>
+    <div class="list" id="deals"></div>
+  </section>
+
+  <section id="p-seguimiento" hidden style="display:grid;gap:12px">
+    <p class="hint">Para seguir un artículo, pulsa <b>Seguir</b> en cualquier resultado, o envía a tu bot de Telegram <code>/seguir enlace precio</code>. Te avisa si baja de precio, si cruza tu precio objetivo o si vuelve a haber stock.</p>
+    <div class="list" id="tracked"></div>
+  </section>
+
+  <section id="p-tiendas" hidden style="display:grid;gap:14px">
+    <div class="list" id="stores"></div>
+    <div class="grid2">
+      <div class="card">
+        <h2>Tus avisos</h2>
+        <dl id="settings"></dl>
+        <p class="hint">Se cambian desde el bot de Telegram: <code>/minimo 25</code>, <code>/claves noveske, mws</code>.</p>
+      </div>
+      <div class="card">
+        <h2>Comandos del bot</h2>
+        <dl>
+          <dt><code>/seguir</code></dt><dd>enlace y precio objetivo</dd>
+          <dt><code>/lista</code></dt><dd>lo que sigues</dd>
+          <dt><code>/dejar 2</code></dt><dd>dejar de seguir el nº 2</dd>
+          <dt><code>/buscar</code></dt><dd>palabras clave</dd>
+          <dt><code>/ofertas</code></dt><dd>mayores rebajas</dd>
+          <dt><code>/estado</code></dt><dd>estado de las tiendas</dd>
+        </dl>
+        <p class="hint">El bot lee tus mensajes cada 10 minutos.</p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script>
+const STORE_NAMES = { hobbyexpert: "Hobby Expert", gunfire: "Gunfire", powair6: "Powair6", evike: "Evike Europe", opsstore: "Ops-Store", taiwangun: "Taiwangun" };
+const S = { catalog: { items: [], stores: {} }, promos: { items: [] }, tracked: [], settings: {}, prices: null, sStore: "all", dStore: "all", open: new Set() };
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const safe = u => /^https?:\/\//i.test(u || "") ? u : "#";
+const eur = n => typeof n === "number" ? n.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €" : "—";
+const norm = s => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9.]+/g, " ").trim();
+const when = d => { const x = new Date(d); return isNaN(x) ? "—" : x.toLocaleString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }); };
+const day = d => { const x = new Date(d + "T12:00:00"); return isNaN(x) ? d : x.toLocaleDateString("es-ES", { day: "numeric", month: "short" }); };
+const pct = it => it.r && it.r > it.p ? Math.round(100 * (1 - it.p / it.r)) : 0;
+const SYN = { gbb: ["gbb", "gbbr", "blowback"], gbbr: ["gbb", "gbbr", "blowback"], aeg: ["aeg", "electric", "electrica"], hpa: ["hpa"] };
+function toast(t) { $("toast").textContent = t; $("toast").hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => $("toast").hidden = true, 3500); }
+
+/* pestañas */
+function showTab(n) {
+  document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === n));
+  ["buscar", "ofertas", "seguimiento", "tiendas"].forEach(t => $("p-" + t).hidden = t !== n);
+  try { localStorage.setItem("radar-tab", n); } catch {}
+}
+document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
+{ let t = location.hash.slice(1); try { t = t || localStorage.getItem("radar-tab"); } catch {} if (["buscar","ofertas","seguimiento","tiendas"].includes(t)) showTab(t); }
+
+/* filtros por tienda */
+function storeChips(el, key, onChange) {
+  const counts = {}; S.catalog.items.forEach(i => counts[i.s] = (counts[i.s] || 0) + 1);
+  const ids = Object.keys(STORE_NAMES).filter(k => counts[k]);
+  el.innerHTML = [`<button class="chip" type="button" data-s="all" aria-pressed="${S[key] === "all"}">Todas</button>`]
+    .concat(ids.map(k => `<button class="chip" type="button" data-s="${k}" aria-pressed="${S[key] === k}">${esc(STORE_NAMES[k])}</button>`)).join("");
+  el.querySelectorAll("button").forEach(b => b.addEventListener("click", () => { S[key] = b.dataset.s; storeChips(el, key, onChange); onChange(); }));
+}
+
+/* historial */
+async function loadPrices() {
+  if (S.prices) return S.prices;
+  try { S.prices = await (await fetch("data/prices.json", { cache: "no-cache" })).json(); } catch { S.prices = {}; }
+  return S.prices;
+}
+function spark(hist, target) {
+  const h = (hist || []).filter(x => typeof x[1] === "number").slice(-90);
+  const W = 360, H = 56, pad = 4;
+  if (h.length < 2) return `<p class="hint">${h.length ? "Precio sin cambios desde el " + day(h[0][0]) + ": " + eur(h[0][1]) : "Aún sin historial."}</p>`;
+  const vals = h.map(x => x[1]).concat(typeof target === "number" ? [target] : []);
+  let lo = Math.min(...vals), hi = Math.max(...vals); if (hi === lo) { hi++; lo--; }
+  const x = i => pad + i * (W - 2 * pad) / (h.length - 1), y = v => pad + (hi - v) * (H - 2 * pad - 10) / (hi - lo);
+  const pts = h.map((d, i) => `${x(i).toFixed(1)},${y(d[1]).toFixed(1)}`);
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" role="img" aria-label="Historial de precio">
+    <line class="grid" x1="0" x2="${W}" y1="${H - 10}" y2="${H - 10}"/>
+    ${typeof target === "number" ? `<line class="tg" x1="${pad}" x2="${W - pad}" y1="${y(target)}" y2="${y(target)}"/>` : ""}
+    <path class="area" d="M${x(0)},${H - 10} L${pts.join(" L")} L${x(h.length - 1)},${H - 10} Z"/>
+    <polyline class="ln" points="${pts.join(" ")}"/><circle class="end" r="2.8" cx="${x(h.length - 1)}" cy="${y(h[h.length - 1][1])}"/>
+    <text x="${pad}" y="${H - 1}">${day(h[0][0])} · ${eur(Math.min(...h.map(v => v[1])))} mín.</text><text x="${W - pad}" y="${H - 1}" text-anchor="end">${day(h[h.length - 1][0])}</text></svg>`;
+}
+
+/* filas de producto */
+function itemRow(it, best) {
+  const p = pct(it), open = S.open.has(it.u);
+  const stock = it.k === 0 ? '<span class="pill bad">Sin stock</span>' : it.k === 1 ? '<span class="pill good">En stock</span>' : "";
+  const hist = open ? spark(S.prices?.[it.u]) : "";
+  return `<article class="row ${best && it.p === best ? "best" : ""}">
+    <div class="store">${esc(STORE_NAMES[it.s] || it.s)}</div>
+    <div class="name"><a href="${esc(safe(it.u))}" target="_blank" rel="noopener">${esc(it.n)}</a>
+      <div class="meta">${stock}${p ? `<span class="pct">−${p} %</span>` : ""}
+        <button class="linkbtn" type="button" data-hist="${esc(it.u)}">${open ? "Ocultar historial" : "Historial"}</button>
+        <button class="linkbtn" type="button" data-follow="${esc(it.u)}">Seguir</button></div>${hist}</div>
+    <div class="price"><div class="now">${eur(it.p)}</div>${it.r && it.r > it.p ? `<s>${eur(it.r)}</s>` : ""}</div>
+  </article>`;
+}
+function bindRows(root, rerender) {
+  root.querySelectorAll("[data-hist]").forEach(b => b.addEventListener("click", async () => {
+    const u = b.dataset.hist; await loadPrices(); S.open.has(u) ? S.open.delete(u) : S.open.add(u); rerender();
+  }));
+  root.querySelectorAll("[data-follow]").forEach(b => b.addEventListener("click", async () => {
+    const cmd = "/seguir " + b.dataset.follow;
+    try { await navigator.clipboard.writeText(cmd); toast("Copiado. Pégalo en tu bot de Telegram para seguirlo."); }
+    catch { toast("Envía a tu bot: " + cmd); }
+    const bot = S.settings.botUsername;
+    if (bot) window.open("https://t.me/" + encodeURIComponent(bot), "_blank", "noopener");
+  }));
+}
+
+/* buscador */
+function search() {
+  const q = norm($("q").value), toks = q.split(" ").filter(t => t.length > 1);
+  const onlyStock = $("sStock").checked, sort = $("sSort").value;
+  if (!toks.length) {
+    $("results").innerHTML = `<div class="empty"><strong>Busca una réplica</strong>Escribe palabras clave arriba. Solo salen productos que las tengan todas, del más barato al más caro.</div>`;
+    $("c-buscar").textContent = ""; $("sHint").textContent = ""; return;
+  }
+  let res = S.catalog.items.filter(it => {
+    if (S.sStore !== "all" && it.s !== S.sStore) return false;
+    if (onlyStock && it.k === 0) return false;
+    const n = it._n || (it._n = norm(it.n));
+    return toks.every(t => (SYN[t] || [t]).some(s => n.includes(s)));
+  });
+  res.sort(sort === "pct" ? (a, b) => pct(b) - pct(a) || a.p - b.p : sort === "name" ? (a, b) => a.n.localeCompare(b.n) : (a, b) => a.p - b.p);
+  $("c-buscar").textContent = res.length || "";
+  const inStock = res.filter(r => r.k !== 0);
+  const best = inStock.length ? Math.min(...inStock.map(r => r.p)) : null;
+  $("results").innerHTML = res.length ? res.slice(0, 150).map(it => itemRow(it, best)).join("")
+    : `<div class="empty"><strong>Nada con esas palabras</strong>Prueba con menos palabras o quita "Solo con stock".</div>`;
+  $("sHint").textContent = res.length > 150 ? `Mostrando 150 de ${res.length}. Añade palabras para afinar.` : "";
+  bindRows($("results"), search);
+}
+let st; $("q").addEventListener("input", () => { clearTimeout(st); st = setTimeout(search, 80); if (!$("p-buscar").hidden) return; showTab("buscar"); });
+$("sform").addEventListener("submit", e => { e.preventDefault(); search(); });
+$("sStock").addEventListener("change", search); $("sSort").addEventListener("change", search);
+
+/* ofertas */
+function renderOffers() {
+  const camps = (S.promos.items || []).filter(p => p.active !== false).sort((a, b) => (b.firstSeen || "").localeCompare(a.firstSeen || ""));
+  const t = new Date().toISOString().slice(0, 10);
+  $("campaigns").innerHTML = camps.length ? camps.map(p => `<article class="row">
+      <div class="store">${esc(STORE_NAMES[p.store] || p.store)}</div>
+      <div class="name"><a href="${esc(safe(p.url))}" target="_blank" rel="noopener">${esc(p.title)}</a>
+        <div class="meta">${p.firstSeen === t ? '<span class="pill good">Nueva</span>' : ""}<span>vista desde ${day(p.firstSeen)}</span></div></div>
+      <div class="price">${p.discount ? `<span class="pct">−${p.discount} %</span>` : ""}</div></article>`).join("")
+    : `<div class="empty"><strong>Sin campañas detectadas</strong>Se actualizan cada 6 horas.</div>`;
+  const min = Number($("dMin").value) || 0;
+  const deals = S.catalog.items.filter(it => pct(it) >= Math.max(1, min) && it.k !== 0 && (S.dStore === "all" || it.s === S.dStore))
+    .sort((a, b) => pct(b) - pct(a));
+  $("c-ofertas").textContent = camps.length || "";
+  $("deals").innerHTML = deals.length ? deals.slice(0, 120).map(it => itemRow(it)).join("")
+    : `<div class="empty"><strong>Nada con ese descuento</strong>Baja el descuento mínimo o cambia de tienda.</div>`;
+  bindRows($("deals"), renderOffers);
+}
+$("dMin").addEventListener("input", renderOffers);
+
+/* seguimiento */
+function renderTracked() {
+  $("c-seg").textContent = S.tracked.length || "";
+  $("tracked").innerHTML = S.tracked.length ? S.tracked.map((t, i) => {
+    const st = t.status === "error" ? `<span class="pill bad">${esc(t.note || "No se pudo leer")}</span>`
+      : t.price == null ? '<span class="pill idle">Pendiente</span>'
+      : t.inStock === false ? '<span class="pill bad">Sin stock</span>'
+      : t.target && t.price <= t.target ? '<span class="pill good">Bajo tu objetivo</span>' : '<span class="pill warn">Vigilando</span>';
+    const h = t.history || [], low = h.length ? Math.min(...h.map(x => x[1])) : null;
+    return `<article class="row">
+      <div class="store">${i + 1}. ${esc(STORE_NAMES[t.store] || "Otra")}</div>
+      <div class="name"><a href="${esc(safe(t.url))}" target="_blank" rel="noopener">${esc(t.name || t.url)}</a>
+        <div class="meta">${st}<span>${t.lastCheck ? "leído " + when(t.lastCheck) : ""}</span><span>/dejar ${i + 1} para quitarlo</span></div>${spark(h, t.target)}</div>
+      <div class="price"><div class="now">${eur(t.price)}</div>${t.regular ? `<s>${eur(t.regular)}</s><br>` : ""}<small>objetivo ${eur(t.target)}</small><br><small>mínimo ${eur(low)}</small></div>
+    </article>`;
+  }).join("") : `<div class="empty"><strong>Aún no sigues nada</strong>Busca un artículo y pulsa Seguir, o envía <code>/seguir enlace</code> a tu bot.</div>`;
+}
+
+/* tiendas y ajustes */
+function renderStores() {
+  const st = S.catalog.stores || {};
+  $("stores").innerHTML = Object.keys(STORE_NAMES).map(k => {
+    const s = st[k] || {};
+    const label = { ok: "Leída", blocked: "No permite lectura automática", error: "Error al leer", off: "Desactivada" }[s.status] || "Pendiente";
+    return `<article class="row"><div class="store">${esc(STORE_NAMES[k])}</div>
+      <div class="name"><span class="dot ${esc(s.status || "")}"></span>${label}${s.note ? `<div class="meta">${esc(s.note)}</div>` : ""}</div>
+      <div class="price"><div class="now">${s.count ?? 0}</div><small>${s.updated ? when(s.updated) : "—"}</small></div></article>`;
+  }).join("");
+  const se = S.settings, yn = v => v === false ? "No" : "Sí";
+  $("settings").innerHTML = `<dt>Rebajas desde</dt><dd>${se.minDiscount ?? 20} %</dd>
+    <dt>Palabras clave</dt><dd>${esc((se.keywords || []).join(", ") || "—")}</dd>
+    <dt>Rebajas nuevas</dt><dd>${yn(se.notifyDeals)}</dd><dt>Campañas nuevas</dt><dd>${yn(se.notifyPromos)}</dd>
+    <dt>Bajadas de precio</dt><dd>${yn(se.notifyDrop)}</dd><dt>Precio objetivo</dt><dd>${yn(se.notifyTarget)}</dd><dt>Vuelta de stock</dt><dd>${yn(se.notifyStock)}</dd>`;
+}
+
+/* arranque */
+(async () => {
+  const get = async (f, d) => { try { const r = await fetch("data/" + f, { cache: "no-cache" }); return r.ok ? await r.json() : d; } catch { return d; } };
+  [S.catalog, S.promos, S.tracked, S.settings] = await Promise.all([
+    get("catalog.json", { items: [], stores: {} }), get("promos.json", { items: [] }), get("tracked.json", []), get("settings.json", {})]);
+  S.catalog.items = S.catalog.items || []; if (!Array.isArray(S.tracked)) S.tracked = [];
+  $("updated").textContent = S.catalog.updated ? `${S.catalog.items.length.toLocaleString("es-ES")} productos · actualizado ${when(S.catalog.updated)}` : "Todavía sin datos: la primera lectura tarda unos minutos";
+  storeChips($("sStores"), "sStore", search); storeChips($("dStores"), "dStore", renderOffers);
+  search(); renderOffers(); renderTracked(); renderStores();
+})();
+</script>
+</body>
+</html>

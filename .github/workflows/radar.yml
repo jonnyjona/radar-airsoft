@@ -1,0 +1,57 @@
+name: Radar Airsoft (tiendas)
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"   # cada 6 horas
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: radar-data
+  cancel-in-progress: false
+
+jobs:
+  radar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Descargar datos guardados
+        run: bash scripts/data-pull.sh
+
+      - name: Leer tiendas
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scraper/radar.py catalog data
+
+      - name: Guardar datos
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: bash scripts/data-push.sh
+
+      - name: Preparar la web
+        run: bash scripts/build-site.sh
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4
