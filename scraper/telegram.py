@@ -38,6 +38,15 @@ def send(chat_id, text):
     return ok
 
 
+def confirm(offset):
+    """Marca como leídos todos los mensajes anteriores a offset (Telegram deja de devolverlos)."""
+    if TOKEN:
+        try:
+            requests.get(f"{API}/getUpdates", params={"offset": offset, "timeout": 0, "limit": 1}, timeout=30)
+        except requests.RequestException as e:
+            print("Telegram confirm error:", e)
+
+
 def updates(offset):
     if not TOKEN:
         return []

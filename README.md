@@ -8,14 +8,16 @@ ejecuta en GitHub Actions.
 
 ## Qué hace
 
-- Cada 6 horas lee el catálogo de réplicas y las promociones de Hobby Expert, Gunfire,
+- Cada 2 horas lee el catálogo de réplicas y las promociones de Hobby Expert, Gunfire,
   Powair6, Evike Europe, Ops-Store y Taiwangun.
 - Respeta el `robots.txt` de cada tienda: lo que una tienda no permite leer de forma
   automática se salta y aparece así en la pestaña **Tiendas y avisos**.
 - La web busca al instante por palabras clave dentro de ese catálogo, enseña las
   campañas y las réplicas rebajadas, y guarda el historial de precios.
-- El bot de Telegram avisa de rebajas y campañas nuevas, y de bajadas de precio, precio
-  objetivo o vuelta de stock en los artículos que sigues.
+- Cada producto tiene una ficha con **precio en vivo** (lee la tienda en ese momento y
+  puede repetirlo cada 5 minutos), historial y el mismo producto en otras tiendas.
+- El bot de Telegram avisa de campañas y réplicas rebajadas nuevas, y de los artículos
+  que sigues cuando bajan de X € o llegan a Y % de descuento.
 
 ## Cómo está montado
 
@@ -23,8 +25,9 @@ ejecuta en GitHub Actions.
 |---|---|
 | Lector de tiendas y bot | `scraper/` (Python) |
 | Web | `site/index.html` |
-| Ejecución programada | `.github/workflows/radar.yml` (tiendas, cada 6 h) y `bot.yml` (mensajes, cada 10 min) |
-| Datos | rama `data` (se reescribe en cada ejecución para que el repositorio no crezca) |
+| Ejecución | `radar.yml` (tiendas, cada 2 h), `bot.yml` (Telegram, cada 10 min), `live.yml` (precio en vivo), `web.yml` (cambios desde la web), `pages.yml` (publicar la web) |
+| Ajustes y seguimiento | `config/` en la rama `main` |
+| Datos | rama `data` (catálogo, precios, campañas; se reescribe en cada lectura) y rama `live` (lecturas en vivo) |
 
 ## Puesta en marcha
 

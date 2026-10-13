@@ -1,0 +1,16 @@
+{
+ "minDiscount": 20,
+ "keywords": [],
+ "notifyPromos": true,
+ "notifyDeals": true,
+ "notifyDrop": true,
+ "notifyStock": true,
+ "stores": {
+  "hobbyexpert": true,
+  "gunfire": true,
+  "powair6": true,
+  "evike": true,
+  "opsstore": true,
+  "taiwangun": true
+ }
+}

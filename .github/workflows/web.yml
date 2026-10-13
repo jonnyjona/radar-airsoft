@@ -1,0 +1,35 @@
+name: Radar Airsoft (cambios desde la web)
+
+on:
+  workflow_dispatch:
+    inputs:
+      ops:
+        description: "Cambios en formato JSON (los pone la web)"
+        required: true
+
+run-name: "Cambios desde la web"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -q -r requirements.txt
+
+      - name: Aplicar cambios
+        env:
+          OPS: ${{ inputs.ops }}
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python -u scraper/radar.py web "$OPS"

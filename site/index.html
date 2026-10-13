@@ -9,9 +9,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Una columna de trabajo: barra de búsqueda arriba, pestañas, filas densas como un cuaderno de campo */
+/* Una columna de trabajo: buscador fijo arriba, pestañas, filas densas que se despliegan en ficha */
 :root {
-  --bg: #eef0ea; --surface: #f9faf6; --line: #d3d8cb; --fg: #1f2620; --muted: #5f6a5c;
+  --bg: #eef0ea; --surface: #f9faf6; --raised: #ffffff; --line: #d3d8cb; --fg: #1f2620; --muted: #5f6a5c;
   --accent: #3f5a35; --accent-fg: #f4f7ef; --coyote: #9a7b4f; --tag: #c4621d; --tag-bg: #f8e6d6;
   --good: #2f7a45; --good-bg: #dcefe0; --warn: #9a6a0b; --warn-bg: #f6ebcf; --bad: #a3392f; --bad-bg: #f6dcd8;
   --display: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
@@ -20,7 +20,7 @@
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) { :root {
-  --bg: #151a15; --surface: #1d241d; --line: #2f3a2e; --fg: #e3e8dd; --muted: #98a493;
+  --bg: #151a15; --surface: #1d241d; --raised: #232b23; --line: #2f3a2e; --fg: #e3e8dd; --muted: #98a493;
   --accent: #9dbb86; --accent-fg: #142012; --coyote: #c9a678; --tag: #f0935a; --tag-bg: #3a2618;
   --good: #8fd3a0; --good-bg: #1e3524; --warn: #e6c26b; --warn-bg: #3a3018; --bad: #f09a90; --bad-bg: #3d1f1c;
   color-scheme: dark } }
@@ -30,6 +30,7 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 var(--
 [hidden] { display: none !important }
 .wrap { max-width: 1000px; margin: 0 auto; padding-block: 20px 56px; display: grid; gap: 16px }
 h1, h2, h3 { font-family: var(--display); margin: 0; text-wrap: balance }
+h2.sec { font-size: 20px; text-transform: uppercase; letter-spacing: .05em }
 a { color: var(--accent) }
 button, input, select { font: inherit; color: inherit }
 :focus-visible { outline: 2px solid var(--tag); outline-offset: 2px }
@@ -38,8 +39,8 @@ header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: 
 .brand h1 { font-size: 34px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em }
 .brand svg { width: 24px; height: 24px; color: var(--accent) }
 .updated { font: 12.5px var(--mono); color: var(--muted) }
-.searchbar { display: flex; gap: 10px; flex-wrap: wrap; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); position: sticky; top: 0; z-index: 2 }
-.searchbar input { flex: 1; min-width: 0; font-size: 17px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg) }
+.searchbar { padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 3 }
+.searchbar input { width: 100%; font-size: 17px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg) }
 nav.tabs { display: flex; gap: 2px; border-bottom: 2px solid var(--line); overflow-x: auto }
 nav.tabs button { background: none; border: 0; padding: 8px 14px; font: 600 17px var(--display); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; white-space: nowrap }
 nav.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent) }
@@ -47,53 +48,73 @@ nav.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: v
 .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
 .chip { padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-size: 13.5px; white-space: nowrap }
 .chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent) }
-.toolbar label { font-size: 13.5px; color: var(--muted); display: inline-flex; gap: 6px; align-items: center }
-select, .toolbar input[type=number] { padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface) }
+.toolbar label, .inl { font-size: 13.5px; color: var(--muted); display: inline-flex; gap: 6px; align-items: center }
+input[type=number], input[type=text], input[type=password], select { padding: 6px 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); min-width: 0 }
+input[type=number] { width: 92px }
+.btn { padding: 7px 14px; border-radius: 6px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-fg); font-weight: 600; cursor: pointer; white-space: nowrap }
+.btn.ghost { background: transparent; color: var(--fg); border-color: var(--line) }
+.btn.danger { background: var(--bad); border-color: var(--bad); color: var(--surface) }
+.btn:disabled { opacity: .55; cursor: default }
+.linkbtn { background: none; border: 0; padding: 0; color: var(--muted); font-size: 13px; text-decoration: underline; cursor: pointer }
 .list { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden }
-.row { display: grid; grid-template-columns: 110px minmax(0,1fr) auto; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line); align-items: start }
+.row { border-top: 1px solid var(--line) }
 .row:first-child { border-top: 0 }
+.rhead { display: grid; grid-template-columns: 110px minmax(0,1fr) auto; gap: 12px; padding: 12px 16px; align-items: start; cursor: pointer }
+.row.static .rhead { cursor: default }
+.row:not(.static) .rhead:hover { background: var(--bg) }
+.row.open > .rhead { background: var(--bg) }
 .store { font: 600 13px var(--display); text-transform: uppercase; letter-spacing: .05em; color: var(--coyote); padding-top: 2px; overflow-wrap: anywhere }
-.name { min-width: 0; overflow-wrap: anywhere }
-.name a { color: var(--fg); text-decoration: none; font-weight: 500 } .name a:hover { text-decoration: underline }
-.meta { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-top: 4px; font-size: 12.5px; color: var(--muted) }
+.name { min-width: 0; overflow-wrap: anywhere; font-weight: 500 }
+.name a { color: var(--fg); text-decoration: none } .name a:hover { text-decoration: underline }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-top: 4px; font-size: 12.5px; color: var(--muted); font-weight: 400 }
 .price { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap }
 .price .now { font-size: 17px; font-weight: 500 }
-.price s { color: var(--muted); font-size: 12.5px }
-.row.best .price .now { color: var(--good) }
+.price s, .price small { color: var(--muted); font-size: 12.5px }
+.best .price .now { color: var(--good) }
 .pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 999px; white-space: nowrap }
 .pill.good { color: var(--good); background: var(--good-bg) } .pill.bad { color: var(--bad); background: var(--bad-bg) }
 .pill.warn { color: var(--warn); background: var(--warn-bg) } .pill.idle { color: var(--muted); background: var(--bg) }
 .pct { font: 500 13px var(--mono); color: var(--tag); background: var(--tag-bg); padding: 1px 7px; border-radius: 3px 10px 10px 3px }
-.linkbtn { background: none; border: 0; padding: 0; color: var(--muted); font-size: 12.5px; text-decoration: underline; cursor: pointer }
+.detail { padding: 4px 16px 18px 138px; display: grid; gap: 16px; background: var(--bg) }
+.detail h3 { font-size: 15px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 6px }
+.livecard { display: grid; gap: 8px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--raised) }
+.liveprice { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px }
+.liveprice .big { font: 500 24px var(--mono); font-variant-numeric: tabular-nums }
+.mini { display: grid; gap: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--raised); overflow: hidden }
+.mini > div { display: grid; grid-template-columns: 100px minmax(0,1fr) auto; gap: 10px; padding: 7px 12px; border-top: 1px solid var(--line); font-size: 14px }
+.mini > div:first-child { border-top: 0 }
+.mini .store { font-size: 12px }
+.form { display: flex; flex-wrap: wrap; gap: 10px; align-items: end }
+.form label { display: grid; gap: 3px; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 600 }
 .empty { padding: 28px 18px; text-align: center; color: var(--muted) }
 .empty strong { display: block; color: var(--fg); font: 600 19px var(--display); margin-bottom: 4px }
 .hint { font-size: 13px; color: var(--muted); margin: 0 }
-.spark { display: block; width: 100%; max-width: 360px; height: 56px; margin-top: 8px }
+.spark { display: block; width: 100%; max-width: 420px; height: 60px }
 .spark .grid { stroke: var(--line) } .spark .area { fill: var(--accent); opacity: .12 }
 .spark .ln { fill: none; stroke: var(--accent); stroke-width: 1.8 } .spark .tg { stroke: var(--tag); stroke-dasharray: 3 3 }
 .spark .end { fill: var(--accent) } .spark text { fill: var(--muted); font: 9px var(--mono) }
 .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px }
 .card { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 16px; display: grid; gap: 10px; align-content: start }
 .card h2 { font-size: 20px; text-transform: uppercase; letter-spacing: .05em }
+.check { display: flex; gap: 8px; align-items: start; font-size: 14.5px; cursor: pointer }
+.check input { margin-top: 4px; accent-color: var(--accent) }
 .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; background: var(--muted); margin-right: 6px }
 .dot.ok { background: var(--good) } .dot.blocked, .dot.error { background: var(--bad) } .dot.off { background: var(--line) }
 code { font: 13px var(--mono); background: var(--bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere }
 dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 14px }
 dt { color: var(--muted) } dd { margin: 0 }
-.livebar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center }
-.btn { padding: 8px 16px; border-radius: 6px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-fg); font-weight: 600; cursor: pointer; white-space: nowrap }
-.btn:disabled { opacity: .55; cursor: default }
-details.card summary { cursor: pointer }
 .steps { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: 14px }
-.livehead { padding: 10px 16px; font: 600 15px var(--display); text-transform: uppercase; letter-spacing: .05em; background: var(--good-bg); color: var(--good) }
-.was { font-size: 12px; color: var(--muted) }
+.keypanel { border: 2px solid var(--tag); }
 .spin { display: inline-block; width: 11px; height: 11px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; margin-right: 6px; vertical-align: -1px }
 @media (prefers-reduced-motion: no-preference) { .spin { animation: rot 1s linear infinite } @keyframes rot { to { transform: rotate(360deg) } } }
-.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-size: 14px; max-width: calc(100% - 32px) }
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-size: 14px; max-width: calc(100% - 32px); z-index: 9 }
 @media (max-width: 720px) {
-  .row { grid-template-columns: minmax(0,1fr) auto }
-  .row .store { grid-column: 1 / -1; padding: 0 }
+  .rhead { grid-template-columns: minmax(0,1fr) auto }
+  .rhead .store { grid-column: 1 / -1; padding: 0 }
+  .detail { padding: 4px 16px 18px }
   .grid2 { grid-template-columns: 1fr }
+  .mini > div { grid-template-columns: minmax(0,1fr) auto }
+  .mini > div .store { grid-column: 1 / -1 }
 }
 </style>
 </head>
@@ -111,75 +132,81 @@ details.card summary { cursor: pointer }
     <input id="q" type="search" placeholder="Palabras clave: noveske gbb n4 mws" aria-label="Buscar en el catálogo">
   </form>
 
+  <section class="card keypanel" id="keyPanel" hidden>
+    <h2>Conecta tu GitHub</h2>
+    <p class="hint">Para leer precios en vivo, seguir artículos y guardar ajustes desde la web hace falta una clave de tu cuenta de GitHub. Se hace una vez por navegador.</p>
+    <ol class="steps">
+      <li>Abre <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a>.</li>
+      <li>Nombre: <code>Radar Airsoft</code>. Caducidad: la que quieras (por ejemplo, 1 año).</li>
+      <li><b>Repository access</b> → <b>Only select repositories</b> → <code>radar-airsoft</code>.</li>
+      <li><b>Permissions → Repository permissions</b>: <b>Actions</b> = Read and write · <b>Contents</b> = Read-only.</li>
+      <li><b>Generate token</b>, cópiala y pégala aquí:</li>
+    </ol>
+    <div class="toolbar"><input type="password" id="tokIn" placeholder="github_pat_…" autocomplete="off" style="flex:1"><button class="btn" type="button" id="tokSave">Guardar clave</button><button class="btn ghost" type="button" id="tokClose">Ahora no</button></div>
+    <p class="hint">La clave se queda solo en este navegador. Sin ella también puedes seguir artículos enviando a tu bot de Telegram <code>/seguir enlace 150 20%</code>.</p>
+  </section>
+
   <nav class="tabs" role="tablist">
     <button role="tab" data-tab="buscar" aria-selected="true">Buscar<span class="count" id="c-buscar"></span></button>
     <button role="tab" data-tab="ofertas" aria-selected="false">Ofertas<span class="count" id="c-ofertas"></span></button>
     <button role="tab" data-tab="seguimiento" aria-selected="false">Seguimiento<span class="count" id="c-seg"></span></button>
-    <button role="tab" data-tab="tiendas" aria-selected="false">Tiendas y avisos</button>
+    <button role="tab" data-tab="ajustes" aria-selected="false">Ajustes</button>
   </nav>
 
   <section id="p-buscar" style="display:grid;gap:12px">
-    <div class="livebar">
-      <button class="btn" type="button" id="liveBtn">Precios en vivo</button>
-      <span class="hint" id="liveStatus">Pulsa Intro o el botón para leer ahora mismo los precios de los primeros resultados en cada tienda (tarda alrededor de un minuto).</span>
-    </div>
-    <details class="card" id="liveSetup" hidden>
-      <summary><b>Configurar precios en vivo</b> (una sola vez en este navegador)</summary>
-      <ol class="steps">
-        <li>Abre <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a>.</li>
-        <li>Nombre: <code>Radar en vivo</code>. Caducidad: la que quieras (por ejemplo, 1 año).</li>
-        <li>En <b>Repository access</b> elige <b>Only select repositories</b> → <code>radar-airsoft</code>.</li>
-        <li>En <b>Permissions → Repository permissions</b>: <b>Actions</b> = Read and write, y <b>Contents</b> = Read-only.</li>
-        <li>Pulsa <b>Generate token</b>, cópialo y pégalo aquí:</li>
-      </ol>
-      <div class="toolbar"><input type="password" id="tokIn" placeholder="github_pat_…" autocomplete="off" style="flex:1;min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg)"><button class="btn" type="button" id="tokSave">Guardar</button></div>
-      <p class="hint">La clave se guarda solo en este navegador y solo sirve para lanzar la lectura en tu repositorio. <button class="linkbtn" type="button" id="tokForget">Olvidar la clave</button></p>
-    </details>
-    <div id="liveBox" hidden>
-      <div class="list" id="liveList"></div>
-    </div>
     <div class="toolbar" id="sStores"></div>
     <div class="toolbar">
       <label><input type="checkbox" id="sStock" checked> Solo con stock</label>
       <label>Ordenar <select id="sSort"><option value="price">Precio más bajo</option><option value="pct">Mayor descuento</option><option value="name">Nombre</option></select></label>
     </div>
-    <div class="list" id="results"><div class="empty"><strong>Busca una réplica</strong>Escribe palabras clave arriba. Solo salen productos que las tengan todas, del más barato al más caro.</div></div>
+    <div class="list" id="results"></div>
     <p class="hint" id="sHint"></p>
   </section>
 
   <section id="p-ofertas" hidden style="display:grid;gap:14px">
-    <h2 style="font-size:20px;text-transform:uppercase;letter-spacing:.05em">Campañas en las tiendas</h2>
+    <h2 class="sec">Campañas en las tiendas</h2>
     <div class="list" id="campaigns"></div>
-    <h2 style="font-size:20px;text-transform:uppercase;letter-spacing:.05em">Réplicas rebajadas</h2>
+    <h2 class="sec">Réplicas rebajadas</h2>
     <div class="toolbar" id="dStores"></div>
-    <div class="toolbar"><label>Descuento mínimo <input type="number" id="dMin" min="0" max="90" step="5" value="15" style="width:70px"> %</label></div>
+    <div class="toolbar"><label>Descuento mínimo <input type="number" id="dMin" min="0" max="90" step="5" value="15"> %</label></div>
     <div class="list" id="deals"></div>
   </section>
 
   <section id="p-seguimiento" hidden style="display:grid;gap:12px">
-    <p class="hint">Para seguir un artículo, pulsa <b>Seguir</b> en cualquier resultado, o envía a tu bot de Telegram <code>/seguir enlace precio</code>. Te avisa si baja de precio, si cruza tu precio objetivo o si vuelve a haber stock.</p>
-    <div class="list" id="tracked"></div>
+    <p class="hint">Te aviso por Telegram cuando un artículo baje del precio que pongas o llegue al descuento que pongas (lo que ocurra primero). Si no pones nada, te aviso de cualquier bajada. Para añadir uno, ábrelo en Buscar y pulsa <b>Seguir</b>.</p>
+    <div class="list" id="watch"></div>
   </section>
 
-  <section id="p-tiendas" hidden style="display:grid;gap:14px">
+  <section id="p-ajustes" hidden style="display:grid;gap:14px">
+    <h2 class="sec">Tiendas</h2>
     <div class="list" id="stores"></div>
     <div class="grid2">
+      <form class="card" id="setForm">
+        <h2>Avisos de Telegram</h2>
+        <label class="inl">Rebajas y campañas desde <input type="number" id="s-min" min="0" max="90" step="5"> %</label>
+        <label style="display:grid;gap:4px;font-size:13.5px;color:var(--muted)">Palabras que siempre te interesan (separadas por comas)
+          <input type="text" id="s-kw" placeholder="noveske, mws, hpa"></label>
+        <label class="check"><input type="checkbox" id="s-deals"> <span>Réplicas recién rebajadas en el catálogo</span></label>
+        <label class="check"><input type="checkbox" id="s-promos"> <span>Campañas nuevas de las tiendas</span></label>
+        <label class="check"><input type="checkbox" id="s-drop"> <span>Seguimiento sin precio ni descuento: cualquier bajada</span></label>
+        <label class="check"><input type="checkbox" id="s-stock"> <span>Seguimiento: vuelve a haber stock</span></label>
+        <div class="toolbar"><button class="btn" type="submit" id="setSave">Guardar ajustes</button><span class="hint" id="setMsg" aria-live="polite"></span></div>
+      </form>
       <div class="card">
-        <h2>Tus avisos</h2>
-        <dl id="settings"></dl>
-        <p class="hint">Se cambian desde el bot de Telegram: <code>/minimo 25</code>, <code>/claves noveske, mws</code>.</p>
-      </div>
-      <div class="card">
-        <h2>Comandos del bot</h2>
+        <h2>Bot de Telegram</h2>
         <dl>
-          <dt><code>/seguir</code></dt><dd>enlace y precio objetivo</dd>
+          <dt><code>/seguir</code></dt><dd>enlace, precio y/o descuento: <code>/seguir https://… 150 20%</code></dd>
+          <dt><code>/aviso 2 140</code></dt><dd>cambiar el aviso del nº 2</dd>
           <dt><code>/lista</code></dt><dd>lo que sigues</dd>
           <dt><code>/dejar 2</code></dt><dd>dejar de seguir el nº 2</dd>
           <dt><code>/buscar</code></dt><dd>palabras clave</dd>
           <dt><code>/ofertas</code></dt><dd>mayores rebajas</dd>
-          <dt><code>/estado</code></dt><dd>estado de las tiendas</dd>
+          <dt><code>/minimo 25</code></dt><dd>descuento mínimo</dd>
         </dl>
         <p class="hint">El bot lee tus mensajes cada 10 minutos.</p>
+        <h2 style="margin-top:8px">Clave de GitHub</h2>
+        <p class="hint" id="keyState"></p>
+        <div class="toolbar"><button class="btn ghost" type="button" id="keyOpen">Configurar clave</button><button class="linkbtn" type="button" id="keyForget">Olvidar la clave</button></div>
       </div>
     </div>
   </section>
@@ -187,47 +214,86 @@ details.card summary { cursor: pointer }
 <div class="toast" id="toast" hidden role="status"></div>
 
 <script>
+const REPO = "jonnyjona/radar-airsoft";
+const RAW = `https://raw.githubusercontent.com/${REPO}/`;
+const API = `https://api.github.com/repos/${REPO}`;
 const STORE_NAMES = { hobbyexpert: "Hobby Expert", gunfire: "Gunfire", powair6: "Powair6", evike: "Evike Europe", opsstore: "Ops-Store", taiwangun: "Taiwangun" };
-const S = { catalog: { items: [], stores: {} }, promos: { items: [] }, tracked: [], settings: {}, prices: null, sStore: "all", dStore: "all", open: new Set() };
+const AUTO_MIN = 5;
+const S = { catalog: { items: [], stores: {} }, promos: { items: [] }, watch: [], wstate: {}, settings: {}, prices: null,
+  sStore: "all", dStore: "all", open: null, live: {}, confirmDel: null, editing: null };
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const safe = u => /^https?:\/\//i.test(u || "") ? u : "#";
 const eur = n => typeof n === "number" ? n.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €" : "—";
 const norm = s => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9.]+/g, " ").trim();
 const when = d => { const x = new Date(d); return isNaN(x) ? "—" : x.toLocaleString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }); };
+const hhmm = d => new Date(d).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
 const day = d => { const x = new Date(d + "T12:00:00"); return isNaN(x) ? d : x.toLocaleDateString("es-ES", { day: "numeric", month: "short" }); };
-const pct = it => it.r && it.r > it.p ? Math.round(100 * (1 - it.p / it.r)) : 0;
-const SYN = { gbb: ["gbb", "gbbr", "blowback"], gbbr: ["gbb", "gbbr", "blowback"], aeg: ["aeg", "electric", "electrica"], hpa: ["hpa"] };
-function toast(t) { $("toast").textContent = t; $("toast").hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => $("toast").hidden = true, 3500); }
+const disc = (p, r) => p && r && r > p ? Math.round(100 * (1 - p / r)) : 0;
+const SYN = { gbb: ["gbb", "gbbr", "blowback"], gbbr: ["gbb", "gbbr", "blowback"], aeg: ["aeg", "electric", "electrica"] };
+const uid = () => (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)).replace(/[^a-z0-9]/g, "");
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function toast(t) { $("toast").textContent = t; $("toast").hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => $("toast").hidden = true, 4000); }
 
-/* pestañas */
+/* ---------- clave de GitHub y acciones ---------- */
+const TOK = "radar-gh-token";
+const getTok = () => { try { return localStorage.getItem(TOK) || ""; } catch { return ""; } };
+const setTok = t => { try { t ? localStorage.setItem(TOK, t) : localStorage.removeItem(TOK); } catch {} };
+function needKey() { $("keyPanel").hidden = false; $("keyPanel").scrollIntoView({ behavior: "smooth", block: "start" }); $("tokIn").focus(); }
+function renderKeyState() { $("keyState").textContent = getTok() ? "Guardada en este navegador." : "No configurada en este navegador."; }
+$("tokSave").addEventListener("click", () => {
+  const t = $("tokIn").value.trim();
+  if (!/^(github_pat_|ghp_)/.test(t)) { toast("Esa clave no parece de GitHub (empieza por github_pat_)."); return; }
+  setTok(t); $("tokIn").value = ""; $("keyPanel").hidden = true; renderKeyState(); toast("Clave guardada. Ya puedes repetir lo que estabas haciendo.");
+});
+$("tokClose").addEventListener("click", () => $("keyPanel").hidden = true);
+$("keyOpen").addEventListener("click", needKey);
+$("keyForget").addEventListener("click", () => { setTok(""); renderKeyState(); toast("Clave borrada de este navegador."); });
+
+async function dispatch(workflow, inputs) {
+  const tok = getTok();
+  if (!tok) { needKey(); throw new Error("Falta la clave de GitHub."); }
+  const r = await fetch(`${API}/actions/workflows/${workflow}/dispatches`, {
+    method: "POST", headers: { Authorization: "Bearer " + tok, Accept: "application/vnd.github+json", "Content-Type": "application/json" },
+    body: JSON.stringify({ ref: "main", inputs }) });
+  if (r.status === 401) { needKey(); throw new Error("GitHub no acepta la clave (¿ha caducado?). Vuelve a configurarla."); }
+  if (r.status === 403 || r.status === 404) { needKey(); throw new Error("La clave no tiene permiso: necesita Actions = Read and write en radar-airsoft."); }
+  if (!r.ok) throw new Error(`GitHub no pudo lanzarlo (${r.status}). Prueba en un momento.`);
+}
+async function readFile(branch, path, fallback, fresh) {
+  const tok = getTok();
+  try {
+    let r;
+    if (fresh && tok) r = await fetch(`${API}/contents/${path}?ref=${branch}`, { headers: { Authorization: "Bearer " + tok, Accept: "application/vnd.github.raw+json" }, cache: "no-store" });
+    else r = await fetch(`${RAW}${branch}/${path}?t=${Math.floor(Date.now() / 60000)}`, { cache: "no-store" });
+    return r.ok ? await r.json() : fallback;
+  } catch { return fallback; }
+}
+
+/* ---------- pestañas ---------- */
+const TABS = ["buscar", "ofertas", "seguimiento", "ajustes"];
 function showTab(n) {
   document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === n));
-  ["buscar", "ofertas", "seguimiento", "tiendas"].forEach(t => $("p-" + t).hidden = t !== n);
+  TABS.forEach(t => $("p-" + t).hidden = t !== n);
   try { localStorage.setItem("radar-tab", n); } catch {}
 }
 document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
-{ let t = location.hash.slice(1); try { t = t || localStorage.getItem("radar-tab"); } catch {} if (["buscar","ofertas","seguimiento","tiendas"].includes(t)) showTab(t); }
+{ let t = location.hash.slice(1); try { t = t || localStorage.getItem("radar-tab"); } catch {} if (TABS.includes(t)) showTab(t); }
 
-/* filtros por tienda */
 function storeChips(el, key, onChange) {
   const counts = {}; S.catalog.items.forEach(i => counts[i.s] = (counts[i.s] || 0) + 1);
   const ids = Object.keys(STORE_NAMES).filter(k => counts[k]);
   el.innerHTML = [`<button class="chip" type="button" data-s="all" aria-pressed="${S[key] === "all"}">Todas</button>`]
-    .concat(ids.map(k => `<button class="chip" type="button" data-s="${k}" aria-pressed="${S[key] === k}">${esc(STORE_NAMES[k])}</button>`)).join("");
+    .concat(ids.map(k => `<button class="chip" type="button" data-s="${k}" aria-pressed="${S[key] === k}">${esc(STORE_NAMES[k])} <span class="count">${counts[k]}</span></button>`)).join("");
   el.querySelectorAll("button").forEach(b => b.addEventListener("click", () => { S[key] = b.dataset.s; storeChips(el, key, onChange); onChange(); }));
 }
 
-/* historial */
-async function loadPrices() {
-  if (S.prices) return S.prices;
-  try { S.prices = await (await fetch("data/prices.json", { cache: "no-cache" })).json(); } catch { S.prices = {}; }
-  return S.prices;
-}
+/* ---------- historial ---------- */
+async function loadPrices() { if (!S.prices) S.prices = await readFile("data", "prices.json", {}); return S.prices; }
 function spark(hist, target) {
   const h = (hist || []).filter(x => typeof x[1] === "number").slice(-90);
-  const W = 360, H = 56, pad = 4;
-  if (h.length < 2) return `<p class="hint">${h.length ? "Precio sin cambios desde el " + day(h[0][0]) + ": " + eur(h[0][1]) : "Aún sin historial."}</p>`;
+  const W = 420, H = 60, pad = 4;
+  if (h.length < 2) return `<p class="hint">${h.length ? "Sin cambios de precio desde el " + day(h[0][0]) + " (" + eur(h[0][1]) + ")." : "Aún sin historial."}</p>`;
   const vals = h.map(x => x[1]).concat(typeof target === "number" ? [target] : []);
   let lo = Math.min(...vals), hi = Math.max(...vals); if (hi === lo) { hi++; lo--; }
   const x = i => pad + i * (W - 2 * pad) / (h.length - 1), y = v => pad + (hi - v) * (H - 2 * pad - 10) / (hi - lo);
@@ -237,197 +303,314 @@ function spark(hist, target) {
     ${typeof target === "number" ? `<line class="tg" x1="${pad}" x2="${W - pad}" y1="${y(target)}" y2="${y(target)}"/>` : ""}
     <path class="area" d="M${x(0)},${H - 10} L${pts.join(" L")} L${x(h.length - 1)},${H - 10} Z"/>
     <polyline class="ln" points="${pts.join(" ")}"/><circle class="end" r="2.8" cx="${x(h.length - 1)}" cy="${y(h[h.length - 1][1])}"/>
-    <text x="${pad}" y="${H - 1}">${day(h[0][0])} · ${eur(Math.min(...h.map(v => v[1])))} mín.</text><text x="${W - pad}" y="${H - 1}" text-anchor="end">${day(h[h.length - 1][0])}</text></svg>`;
+    <text x="${pad}" y="${H - 1}">${day(h[0][0])} · mínimo ${eur(Math.min(...h.map(v => v[1])))}</text><text x="${W - pad}" y="${H - 1}" text-anchor="end">${day(h[h.length - 1][0])}</text></svg>`;
 }
 
-/* filas de producto */
+/* ---------- mismo producto en otras tiendas ---------- */
+const STOP = new Set("airsoft replica replika rifle fusil carbine carabina pistol pistola gun gas aeg gbb gbbr with con de del la el and the for por para en black negro negra tan".split(" "));
+const toks = it => it._t || (it._t = new Set(norm(it.n).split(" ").filter(t => t.length > 1 && !STOP.has(t))));
+function similar(it) {
+  const a = toks(it); if (a.size < 2) return [];
+  const out = [];
+  for (const o of S.catalog.items) {
+    if (o.s === it.s) continue;
+    const b = toks(o); let inter = 0; a.forEach(t => b.has(t) && inter++);
+    const score = inter / (a.size + b.size - inter);
+    if (score >= 0.45) out.push([score, o]);
+  }
+  return out.sort((x, y) => y[0] - x[0]).slice(0, 5).map(x => x[1]).sort((x, y) => x.p - y.p);
+}
+
+/* ---------- precio en vivo de un producto ---------- */
+function liveState(url) { return S.live[url] || (S.live[url] = { status: "idle", auto: false }); }
+async function goLive(url) {
+  const L = liveState(url);
+  if (L.status === "running") return;
+  clearTimeout(L.timer);
+  const id = uid(); L.status = "running"; L.started = Date.now(); L.err = null; L.req = id; updateLive(url);
+  try { await dispatch("live.yml", { url, id }); }
+  catch (e) { L.status = "error"; L.err = e.message; updateLive(url); return; }
+  while (Date.now() - L.started < 180000 && L.req === id) {
+    await sleep(4000);
+    const res = await readFile("live", `live/${id}.json`, null, true);
+    if (res) { L.status = "done"; L.res = res; scheduleAuto(url); updateLive(url); return; }
+    updateLive(url);
+  }
+  if (L.req === id) { L.status = "error"; L.err = "La lectura está tardando más de lo normal."; scheduleAuto(url); updateLive(url); }
+}
+function scheduleAuto(url) {
+  const L = liveState(url); clearTimeout(L.timer);
+  if (!L.auto) { L.next = null; return; }
+  L.next = Date.now() + AUTO_MIN * 60000;
+  L.timer = setTimeout(() => { if (L.auto) goLive(url); }, AUTO_MIN * 60000);
+}
+function stopAuto(url) { const L = S.live[url]; if (L) { L.auto = false; L.next = null; clearTimeout(L.timer); } }
+function liveCard(url, catalogPrice) {
+  const L = liveState(url);
+  let body;
+  if (L.status === "running") body = `<p class="hint"><span class="spin"></span>Leyendo la tienda ahora… ${Math.round((Date.now() - L.started) / 1000)} s (suele tardar un minuto)</p>`;
+  else if (L.status === "error") body = `<p class="hint" style="color:var(--bad)">${esc(L.err)}</p>`;
+  else if (L.status === "done") {
+    const r = L.res;
+    if (!r.ok) body = `<p class="hint" style="color:var(--bad)">${esc(r.note || "No se pudo leer")}</p>`;
+    else {
+      const d = disc(r.price, r.regular);
+      const stock = r.inStock === false ? '<span class="pill bad">Sin stock</span>' : r.inStock ? '<span class="pill good">En stock</span>' : "";
+      const vs = typeof catalogPrice === "number" && Math.abs(catalogPrice - r.price) >= 0.01
+        ? `<span class="hint">${r.price < catalogPrice ? "baja" : "sube"} desde ${eur(catalogPrice)} del catálogo</span>` : "";
+      body = `<div class="liveprice"><span class="big">${eur(r.price)}</span>${r.regular ? `<s class="hint">${eur(r.regular)}</s>` : ""}${d ? `<span class="pct">−${d} %</span>` : ""}${stock}${vs}</div>
+        <p class="hint">Leído a las ${hhmm(r.finishedAt)}.</p>`;
+    }
+  } else body = `<p class="hint">Lee la ficha en la tienda ahora mismo (tarda alrededor de un minuto).</p>`;
+  const nxt = L.auto && L.next ? ` · próxima lectura a las ${hhmm(L.next)}` : "";
+  return `<div class="livecard" data-livebox="${esc(url)}" data-cp="${typeof catalogPrice === "number" ? catalogPrice : ""}">
+    <div class="toolbar"><button class="btn" type="button" data-live="${esc(url)}" ${L.status === "running" ? "disabled" : ""}>Precio en vivo</button>
+      <label><input type="checkbox" data-auto="${esc(url)}" ${L.auto ? "checked" : ""}> Actualizar cada ${AUTO_MIN} min${nxt}</label></div>
+    ${body}</div>`;
+}
+
+/* ---------- seguir ---------- */
+const watched = url => S.watch.find(w => w.url === url);
+function condText(w) {
+  const p = [];
+  if (w.target) p.push("≤ " + eur(w.target));
+  if (w.pct) p.push("≥ " + w.pct + " %");
+  return p.length ? p.join(" o ") : "cualquier bajada";
+}
+function followForm(url, name) {
+  const w = watched(url);
+  if (w) return `<p class="hint">Ya lo sigues · aviso: <b>${esc(condText(w))}</b>${w.pending ? ' <span class="pill idle">guardando…</span>' : ""} · <button class="linkbtn" type="button" data-gotab="seguimiento">Ver en Seguimiento</button></p>`;
+  return `<div class="form" data-followform="${esc(url)}" data-name="${esc(name)}">
+    <label>Avisar si baja de<input type="number" min="0" step="1" placeholder="€" data-f="target"></label>
+    <label>o descuento de<input type="number" min="1" max="90" step="5" placeholder="%" data-f="pct"></label>
+    <button class="btn" type="button" data-follow>Seguir</button></div>
+    <p class="hint">Déjalo vacío para que te avise de cualquier bajada.</p>`;
+}
+async function follow(url, name, target, pct) {
+  const item = { id: "tmp" + uid(), url, name, store: (S.catalog.items.find(i => i.u === url) || {}).s || null,
+    target: target || null, pct: pct || null, pending: true };
+  try { await dispatch("web.yml", { ops: JSON.stringify([{ op: "watch_add", url, name, target: target || null, pct: pct || null }]) }); }
+  catch (e) { toast(e.message); return; }
+  S.watch.push(item); rerender(); renderWatch();
+  toast("Guardando… en un minuto aparecerá en Seguimiento y te llegará un mensaje en Telegram.");
+  syncConfig(ws => ws.some(w => w.url === url));
+}
+async function syncConfig(done) {
+  for (let i = 0; i < 30; i++) {
+    await sleep(6000);
+    const ws = await readFile("main", "config/watch.json", null, true);
+    if (ws && done(ws)) { S.watch = ws; rerender(); renderWatch(); return; }
+  }
+}
+
+/* ---------- filas y ficha ---------- */
+function stockPill(k) { return k === 0 ? '<span class="pill bad">Sin stock</span>' : k === 1 ? '<span class="pill good">En stock</span>' : ""; }
 function itemRow(it, best) {
-  const p = pct(it), open = S.open.has(it.u);
-  const stock = it.k === 0 ? '<span class="pill bad">Sin stock</span>' : it.k === 1 ? '<span class="pill good">En stock</span>' : "";
-  const hist = open ? spark(S.prices?.[it.u]) : "";
-  return `<article class="row ${best && it.p === best ? "best" : ""}">
-    <div class="store">${esc(STORE_NAMES[it.s] || it.s)}</div>
-    <div class="name"><a href="${esc(safe(it.u))}" target="_blank" rel="noopener">${esc(it.n)}</a>
-      <div class="meta">${stock}${p ? `<span class="pct">−${p} %</span>` : ""}
-        <button class="linkbtn" type="button" data-hist="${esc(it.u)}">${open ? "Ocultar historial" : "Historial"}</button>
-        <button class="linkbtn" type="button" data-follow="${esc(it.u)}">Seguir</button></div>${hist}</div>
-    <div class="price"><div class="now">${eur(it.p)}</div>${it.r && it.r > it.p ? `<s>${eur(it.r)}</s>` : ""}</div>
+  const p = disc(it.p, it.r), open = S.open === it.u;
+  const w = watched(it.u);
+  return `<article class="row ${best && it.p === best ? "best" : ""} ${open ? "open" : ""}">
+    <div class="rhead" data-open="${esc(it.u)}" role="button" tabindex="0" aria-expanded="${open}">
+      <div class="store">${esc(STORE_NAMES[it.s] || it.s)}</div>
+      <div class="name">${esc(it.n)}
+        <div class="meta">${stockPill(it.k)}${p ? `<span class="pct">−${p} %</span>` : ""}${w ? '<span class="pill warn">Siguiendo</span>' : ""}</div></div>
+      <div class="price"><div class="now">${eur(it.p)}</div>${it.r && it.r > it.p ? `<s>${eur(it.r)}</s>` : ""}</div>
+    </div>${open ? detail(it) : ""}
   </article>`;
 }
-function bindRows(root, rerender) {
-  root.querySelectorAll("[data-hist]").forEach(b => b.addEventListener("click", async () => {
-    const u = b.dataset.hist; await loadPrices(); S.open.has(u) ? S.open.delete(u) : S.open.add(u); rerender();
-  }));
-  root.querySelectorAll("[data-follow]").forEach(b => b.addEventListener("click", async () => {
-    const cmd = "/seguir " + b.dataset.follow;
-    try { await navigator.clipboard.writeText(cmd); toast("Copiado. Pégalo en tu bot de Telegram para seguirlo."); }
-    catch { toast("Envía a tu bot: " + cmd); }
-    const bot = S.settings.botUsername;
-    if (bot) window.open("https://t.me/" + encodeURIComponent(bot), "_blank", "noopener");
+function detail(it) {
+  const sim = similar(it);
+  return `<div class="detail">
+    <div><a class="btn ghost" href="${esc(safe(it.u))}" target="_blank" rel="noopener">Abrir en ${esc(STORE_NAMES[it.s] || "la tienda")} ↗</a></div>
+    ${liveCard(it.u, it.p)}
+    <div><h3>Seguir y avisarme</h3>${followForm(it.u, it.n)}</div>
+    <div><h3>Historial de precio</h3>${S.prices ? spark(S.prices[it.u], watched(it.u)?.target) : '<p class="hint"><span class="spin"></span>Cargando…</p>'}</div>
+    ${sim.length ? `<div><h3>En otras tiendas</h3><div class="mini">${sim.map(o => `<div><span class="store">${esc(STORE_NAMES[o.s])}</span>
+      <span class="name"><a href="${esc(safe(o.u))}" target="_blank" rel="noopener">${esc(o.n)}</a> ${o.k === 0 ? '<span class="pill bad">Sin stock</span>' : ""}</span>
+      <span class="price">${eur(o.p)}</span></div>`).join("")}</div></div>` : ""}
+  </div>`;
+}
+function updateLive(url) {
+  document.querySelectorAll(".livecard").forEach(el => {
+    if (el.dataset.livebox !== url) return;
+    const tmp = document.createElement("div");
+    tmp.innerHTML = liveCard(url, el.dataset.cp === "" ? undefined : Number(el.dataset.cp));
+    const n = tmp.firstElementChild; el.replaceWith(n); bindLive(n);
+  });
+}
+function bindLive(root) {
+  root.querySelectorAll("[data-live]").forEach(b => b.addEventListener("click", () => goLive(b.dataset.live)));
+  root.querySelectorAll("[data-auto]").forEach(c => c.addEventListener("change", () => {
+    const u = c.dataset.auto, L = liveState(u); L.auto = c.checked;
+    if (c.checked && L.status !== "running") goLive(u); else { if (!c.checked) stopAuto(u); updateLive(u); }
   }));
 }
+function bindAll(root) {
+  root.querySelectorAll("[data-open]").forEach(el => {
+    const go = async () => {
+      const u = el.dataset.open;
+      if (S.open && S.open !== u && !watched(S.open)) stopAuto(S.open);
+      if (S.open === u) { if (!watched(u)) stopAuto(u); S.open = null; } else { S.open = u; if (!S.prices) loadPrices().then(rerender); }
+      rerender();
+    };
+    el.addEventListener("click", e => { if (!e.target.closest("a,button,input,label")) go(); });
+    el.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+  });
+  bindLive(root);
+  root.querySelectorAll("[data-followform]").forEach(f => f.querySelector("[data-follow]").addEventListener("click", () => {
+    const t = parseFloat(f.querySelector('[data-f="target"]').value), p = parseInt(f.querySelector('[data-f="pct"]').value, 10);
+    follow(f.dataset.followform, f.dataset.name, isFinite(t) && t > 0 ? t : null, isFinite(p) && p > 0 ? p : null);
+  }));
+  root.querySelectorAll("[data-gotab]").forEach(b => b.addEventListener("click", () => showTab(b.dataset.gotab)));
+}
 
-/* buscador */
+/* ---------- buscador ---------- */
 function search() {
-  const q = norm($("q").value), toks = q.split(" ").filter(t => t.length > 1);
-  const onlyStock = $("sStock").checked, sort = $("sSort").value;
-  if (!toks.length) {
-    $("results").innerHTML = `<div class="empty"><strong>Busca una réplica</strong>Escribe palabras clave arriba. Solo salen productos que las tengan todas, del más barato al más caro.</div>`;
+  const q = norm($("q").value), tk = q.split(" ").filter(t => t.length > 1);
+  if (!tk.length) {
+    $("results").innerHTML = `<div class="empty"><strong>Busca una réplica</strong>Escribe palabras clave arriba. Solo salen productos que las tengan todas, del más barato al más caro. Pulsa un resultado para ver su ficha.</div>`;
     $("c-buscar").textContent = ""; $("sHint").textContent = ""; return;
   }
+  const onlyStock = $("sStock").checked, sort = $("sSort").value;
   let res = S.catalog.items.filter(it => {
     if (S.sStore !== "all" && it.s !== S.sStore) return false;
     if (onlyStock && it.k === 0) return false;
     const n = it._n || (it._n = norm(it.n));
-    return toks.every(t => (SYN[t] || [t]).some(s => n.includes(s)));
+    return tk.every(t => (SYN[t] || [t]).some(s => n.includes(s)));
   });
-  res.sort(sort === "pct" ? (a, b) => pct(b) - pct(a) || a.p - b.p : sort === "name" ? (a, b) => a.n.localeCompare(b.n) : (a, b) => a.p - b.p);
+  res.sort(sort === "pct" ? (a, b) => disc(b.p, b.r) - disc(a.p, a.r) || a.p - b.p : sort === "name" ? (a, b) => a.n.localeCompare(b.n) : (a, b) => a.p - b.p);
   $("c-buscar").textContent = res.length || "";
   const inStock = res.filter(r => r.k !== 0);
   const best = inStock.length ? Math.min(...inStock.map(r => r.p)) : null;
-  $("results").innerHTML = res.length ? res.slice(0, 150).map(it => itemRow(it, best)).join("")
+  $("results").innerHTML = res.length ? res.slice(0, 120).map(it => itemRow(it, best)).join("")
     : `<div class="empty"><strong>Nada con esas palabras</strong>Prueba con menos palabras o quita "Solo con stock".</div>`;
-  $("sHint").textContent = res.length > 150 ? `Mostrando 150 de ${res.length}. Añade palabras para afinar.` : "";
-  bindRows($("results"), search);
+  $("sHint").textContent = res.length > 120 ? `Mostrando 120 de ${res.length}. Añade palabras para afinar.` : "";
+  bindAll($("results"));
 }
-let st; $("q").addEventListener("input", () => { if (live && live.q !== $("q").value.trim()) { live = null; $("liveBox").hidden = true; } clearTimeout(st); st = setTimeout(search, 80); if (!$("p-buscar").hidden) return; showTab("buscar"); });
-$("sform").addEventListener("submit", e => { e.preventDefault(); search(); goLive(); });
-
-/* precios en vivo (GitHub Actions bajo demanda) */
-const REPO = "jonnyjona/radar-airsoft", TOK = "radar-gh-token";
-const getTok = () => { try { return localStorage.getItem(TOK) || ""; } catch { return ""; } };
-const setTok = t => { try { t ? localStorage.setItem(TOK, t) : localStorage.removeItem(TOK); } catch {} };
-let live = null;
-function liveStatus(html) { $("liveStatus").innerHTML = html; }
-$("liveBtn").addEventListener("click", () => { search(); goLive(); });
-$("tokSave").addEventListener("click", () => {
-  const t = $("tokIn").value.trim();
-  if (!/^(github_pat_|ghp_)/.test(t)) { toast("Esa clave no parece de GitHub (empieza por github_pat_)."); return; }
-  setTok(t); $("tokIn").value = ""; $("liveSetup").open = false; $("liveSetup").hidden = true;
-  toast("Clave guardada."); if ($("q").value.trim()) goLive();
-});
-$("tokForget").addEventListener("click", () => { setTok(""); toast("Clave borrada de este navegador."); });
-async function goLive() {
-  const q = $("q").value.trim();
-  if (!q) { liveStatus("Escribe primero las palabras clave."); return; }
-  const tok = getTok();
-  if (!tok) { $("liveSetup").hidden = false; $("liveSetup").open = true; liveStatus("Falta configurar la clave de GitHub (abajo)."); return; }
-  const id = (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)).replace(/[^a-z0-9]/g, "");
-  const me = live = { id, q, t0: Date.now() };
-  $("liveBtn").disabled = true;
-  liveStatus('<span class="spin"></span>Pidiendo la lectura a GitHub…');
-  const H = { Authorization: "Bearer " + tok, Accept: "application/vnd.github+json" };
-  try {
-    const r = await fetch(`https://api.github.com/repos/${REPO}/actions/workflows/live.yml/dispatches`, {
-      method: "POST", headers: { ...H, "Content-Type": "application/json" }, body: JSON.stringify({ ref: "main", inputs: { query: q, id } }) });
-    if (r.status === 401) { liveStatus("GitHub no acepta la clave (¿ha caducado?). Vuelve a configurarla."); $("liveSetup").hidden = false; $("liveSetup").open = true; return; }
-    if (r.status === 403 || r.status === 404) { liveStatus("La clave no tiene permiso para lanzar la lectura. Revisa que tenga Actions: Read and write en radar-airsoft."); $("liveSetup").hidden = false; return; }
-    if (!r.ok) { liveStatus("GitHub no pudo lanzar la lectura (" + r.status + "). Prueba otra vez en un momento."); return; }
-  } catch { liveStatus("Sin conexión con GitHub. Prueba otra vez."); return; }
-  finally { $("liveBtn").disabled = false; }
-  while (live === me && Date.now() - me.t0 < 240000) {
-    liveStatus(`<span class="spin"></span>Leyendo precios en las tiendas… ${Math.round((Date.now() - me.t0) / 1000)} s`);
-    await new Promise(res => setTimeout(res, 4000));
-    if (live !== me) return;
-    try {
-      const r = await fetch(`https://api.github.com/repos/${REPO}/contents/live/${id}.json?ref=live`, { headers: { ...H, Accept: "application/vnd.github.raw+json" }, cache: "no-store" });
-      if (r.ok) { renderLive(await r.json()); return; }
-    } catch {}
-  }
-  if (live === me) liveStatus("La lectura está tardando más de lo normal. Puedes volver a intentarlo.");
-}
-function renderLive(res) {
-  const ok = res.items.filter(i => i.ok);
-  const secs = Math.round((Date.now() - live.t0) / 1000);
-  if (!res.items.length) {
-    liveStatus(`No hay productos del catálogo con «${esc(res.query)}», así que no había fichas que leer.`);
-    $("liveBox").hidden = true; return;
-  }
-  liveStatus(`Precios leídos ahora (${secs} s): ${ok.length} de ${res.items.length} fichas. Abajo, el resto del catálogo.`);
-  const inStock = ok.filter(i => i.k !== 0);
-  const best = inStock.length ? Math.min(...inStock.map(i => i.p)) : null;
-  $("liveBox").hidden = false;
-  $("liveList").innerHTML = `<div class="livehead">En vivo · ${new Date(res.finishedAt).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}</div>` +
-    res.items.map(i => {
-      const stock = i.k === 0 ? '<span class="pill bad">Sin stock</span>' : i.k === 1 ? '<span class="pill good">En stock</span>' : "";
-      const p = i.r && i.p && i.r > i.p ? Math.round(100 * (1 - i.p / i.r)) : 0;
-      const diff = i.ok && Math.abs(i.p - i.catalog) >= 0.01 ? `<div class="was">catálogo: ${eur(i.catalog)}</div>` : "";
-      return `<article class="row ${i.ok && i.p === best ? "best" : ""}">
-        <div class="store">${esc(STORE_NAMES[i.s] || i.s)}</div>
-        <div class="name"><a href="${esc(safe(i.u))}" target="_blank" rel="noopener">${esc(i.n)}</a>
-          <div class="meta">${stock}${p ? `<span class="pct">−${p} %</span>` : ""}${i.note ? `<span>${esc(i.note)}</span>` : ""}
-          <button class="linkbtn" type="button" data-follow="${esc(i.u)}">Seguir</button></div></div>
-        <div class="price"><div class="now">${i.ok ? eur(i.p) : "—"}</div>${i.r && i.r > (i.p || 0) ? `<s>${eur(i.r)}</s>` : ""}${diff}</div>
-      </article>`;
-    }).join("");
-  bindRows($("liveList"), () => {});
-}
+let st; $("q").addEventListener("input", () => { clearTimeout(st); st = setTimeout(search, 80); if ($("p-buscar").hidden) showTab("buscar"); });
+$("sform").addEventListener("submit", e => { e.preventDefault(); search(); $("q").blur(); });
 $("sStock").addEventListener("change", search); $("sSort").addEventListener("change", search);
 
-/* ofertas */
+/* ---------- ofertas ---------- */
 function renderOffers() {
   const camps = (S.promos.items || []).filter(p => p.active !== false).sort((a, b) => (b.firstSeen || "").localeCompare(a.firstSeen || ""));
   const t = new Date().toISOString().slice(0, 10);
-  $("campaigns").innerHTML = camps.length ? camps.map(p => `<article class="row">
+  $("campaigns").innerHTML = camps.length ? camps.map(p => `<article class="row static"><div class="rhead">
       <div class="store">${esc(STORE_NAMES[p.store] || p.store)}</div>
       <div class="name"><a href="${esc(safe(p.url))}" target="_blank" rel="noopener">${esc(p.title)}</a>
         <div class="meta">${p.firstSeen === t ? '<span class="pill good">Nueva</span>' : ""}<span>vista desde ${day(p.firstSeen)}</span></div></div>
-      <div class="price">${p.discount ? `<span class="pct">−${p.discount} %</span>` : ""}</div></article>`).join("")
-    : `<div class="empty"><strong>Sin campañas detectadas</strong>Se actualizan cada 6 horas.</div>`;
+      <div class="price">${p.discount ? `<span class="pct">−${p.discount} %</span>` : ""}</div></div></article>`).join("")
+    : `<div class="empty"><strong>Sin campañas detectadas</strong>Se revisan cada 2 horas.</div>`;
   const min = Number($("dMin").value) || 0;
-  const deals = S.catalog.items.filter(it => pct(it) >= Math.max(1, min) && it.k !== 0 && (S.dStore === "all" || it.s === S.dStore))
-    .sort((a, b) => pct(b) - pct(a));
+  const deals = S.catalog.items.filter(it => disc(it.p, it.r) >= Math.max(1, min) && it.k !== 0 && (S.dStore === "all" || it.s === S.dStore))
+    .sort((a, b) => disc(b.p, b.r) - disc(a.p, a.r));
   $("c-ofertas").textContent = camps.length || "";
   $("deals").innerHTML = deals.length ? deals.slice(0, 120).map(it => itemRow(it)).join("")
     : `<div class="empty"><strong>Nada con ese descuento</strong>Baja el descuento mínimo o cambia de tienda.</div>`;
-  bindRows($("deals"), renderOffers);
+  bindAll($("deals"));
 }
 $("dMin").addEventListener("input", renderOffers);
 
-/* seguimiento */
-function renderTracked() {
-  $("c-seg").textContent = S.tracked.length || "";
-  $("tracked").innerHTML = S.tracked.length ? S.tracked.map((t, i) => {
-    const st = t.status === "error" ? `<span class="pill bad">${esc(t.note || "No se pudo leer")}</span>`
-      : t.price == null ? '<span class="pill idle">Pendiente</span>'
-      : t.inStock === false ? '<span class="pill bad">Sin stock</span>'
-      : t.target && t.price <= t.target ? '<span class="pill good">Bajo tu objetivo</span>' : '<span class="pill warn">Vigilando</span>';
-    const h = t.history || [], low = h.length ? Math.min(...h.map(x => x[1])) : null;
-    return `<article class="row">
-      <div class="store">${i + 1}. ${esc(STORE_NAMES[t.store] || "Otra")}</div>
-      <div class="name"><a href="${esc(safe(t.url))}" target="_blank" rel="noopener">${esc(t.name || t.url)}</a>
-        <div class="meta">${st}<span>${t.lastCheck ? "leído " + when(t.lastCheck) : ""}</span><span>/dejar ${i + 1} para quitarlo</span></div>${spark(h, t.target)}</div>
-      <div class="price"><div class="now">${eur(t.price)}</div>${t.regular ? `<s>${eur(t.regular)}</s><br>` : ""}<small>objetivo ${eur(t.target)}</small><br><small>mínimo ${eur(low)}</small></div>
-    </article>`;
-  }).join("") : `<div class="empty"><strong>Aún no sigues nada</strong>Busca un artículo y pulsa Seguir, o envía <code>/seguir enlace</code> a tu bot.</div>`;
+/* ---------- seguimiento ---------- */
+function renderWatch() {
+  $("c-seg").textContent = S.watch.length || "";
+  if (!S.watch.length) { $("watch").innerHTML = `<div class="empty"><strong>Aún no sigues nada</strong>Busca un artículo, ábrelo y pulsa Seguir. También puedes enviar <code>/seguir enlace 150 20%</code> a tu bot.</div>`; return; }
+  $("watch").innerHTML = S.watch.map((w, i) => {
+    const st = S.wstate[w.id] || {}, first = w.first || {};
+    const price = st.price ?? first.price, regular = st.regular ?? first.regular, stock = st.inStock ?? first.inStock;
+    const d = disc(price, regular);
+    const hit = price != null && ((w.target && price <= w.target) || (w.pct && d >= w.pct));
+    const pill = w.pending ? '<span class="pill idle">Guardando…</span>'
+      : st.status === "error" ? `<span class="pill bad">${esc(st.note || "No se pudo leer")}</span>`
+      : price == null ? '<span class="pill idle">Pendiente de leer</span>'
+      : stock === false ? '<span class="pill bad">Sin stock</span>'
+      : hit ? '<span class="pill good">Cumple tu aviso</span>' : '<span class="pill warn">Vigilando</span>';
+    const editing = S.editing === w.id, confirming = S.confirmDel === w.id;
+    const actions = w.pending ? "" : editing
+      ? `<div class="form" data-editform="${esc(w.id)}"><label>Avisar si baja de<input type="number" min="0" step="1" placeholder="€" data-f="target" value="${w.target ?? ""}"></label>
+          <label>o descuento de<input type="number" min="1" max="90" step="5" placeholder="%" data-f="pct" value="${w.pct ?? ""}"></label>
+          <button class="btn" type="button" data-save>Guardar</button><button class="btn ghost" type="button" data-cancel>Cancelar</button></div>`
+      : confirming
+      ? `<div class="toolbar"><span class="hint">¿Dejar de seguirlo?</span><button class="btn danger" type="button" data-del="${esc(w.id)}">Sí, quitar</button><button class="linkbtn" type="button" data-cancel>Cancelar</button></div>`
+      : `<div class="toolbar"><button class="linkbtn" type="button" data-edit="${esc(w.id)}">Cambiar aviso</button><button class="linkbtn" type="button" data-ask="${esc(w.id)}">Dejar de seguir</button></div>`;
+    return `<article class="row static"><div class="rhead">
+      <div class="store">${i + 1}. ${esc(STORE_NAMES[w.store] || "Tienda")}</div>
+      <div class="name"><a href="${esc(safe(w.url))}" target="_blank" rel="noopener">${esc(w.name || st.name || w.url)}</a>
+        <div class="meta">${pill}${d ? `<span class="pct">−${d} %</span>` : ""}<span>aviso: ${esc(condText(w))}</span>${st.lastCheck ? `<span>leído ${when(st.lastCheck)}</span>` : ""}</div>
+        <div style="margin-top:8px;display:grid;gap:10px">${spark(st.history, w.target)}${w.pending ? "" : liveCard(w.url, price)}${actions}</div></div>
+      <div class="price"><div class="now">${eur(price)}</div>${regular && regular > (price || 0) ? `<s>${eur(regular)}</s>` : ""}</div>
+    </div></article>`;
+  }).join("");
+  const root = $("watch");
+  bindAll(root);
+  root.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", () => { S.editing = b.dataset.edit; S.confirmDel = null; renderWatch(); }));
+  root.querySelectorAll("[data-ask]").forEach(b => b.addEventListener("click", () => { S.confirmDel = b.dataset.ask; S.editing = null; renderWatch(); }));
+  root.querySelectorAll("[data-cancel]").forEach(b => b.addEventListener("click", () => { S.confirmDel = S.editing = null; renderWatch(); }));
+  root.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", async () => {
+    const id = b.dataset.del;
+    try { await dispatch("web.yml", { ops: JSON.stringify([{ op: "watch_remove", id }]) }); } catch (e) { toast(e.message); return; }
+    S.watch = S.watch.filter(w => w.id !== id); S.confirmDel = null; renderWatch(); rerender();
+    toast("Quitado. El cambio se guarda en un minuto.");
+    syncConfig(ws => !ws.some(w => w.id === id));
+  }));
+  root.querySelectorAll("[data-editform]").forEach(f => f.querySelector("[data-save]").addEventListener("click", async () => {
+    const id = f.dataset.editform;
+    const t = parseFloat(f.querySelector('[data-f="target"]').value), p = parseInt(f.querySelector('[data-f="pct"]').value, 10);
+    const target = isFinite(t) && t > 0 ? t : null, pct = isFinite(p) && p > 0 ? p : null;
+    try { await dispatch("web.yml", { ops: JSON.stringify([{ op: "watch_update", id, target, pct }]) }); } catch (e) { toast(e.message); return; }
+    const w = S.watch.find(x => x.id === id); if (w) { w.target = target; w.pct = pct; }
+    S.editing = null; renderWatch(); toast("Aviso cambiado. Se guarda en un minuto.");
+    syncConfig(ws => ws.some(x => x.id === id && (x.target ?? null) === target && (x.pct ?? null) === pct));
+  }));
 }
 
-/* tiendas y ajustes */
-function renderStores() {
+/* ---------- ajustes ---------- */
+function renderSettings() {
   const st = S.catalog.stores || {};
   $("stores").innerHTML = Object.keys(STORE_NAMES).map(k => {
     const s = st[k] || {};
     const label = { ok: "Leída", blocked: "No permite lectura automática", error: "Error al leer", off: "Desactivada" }[s.status] || "Pendiente";
-    return `<article class="row"><div class="store">${esc(STORE_NAMES[k])}</div>
+    return `<article class="row static"><div class="rhead"><div class="store">${esc(STORE_NAMES[k])}</div>
       <div class="name"><span class="dot ${esc(s.status || "")}"></span>${label}${s.note ? `<div class="meta">${esc(s.note)}</div>` : ""}</div>
-      <div class="price"><div class="now">${s.count ?? 0}</div><small>${s.updated ? when(s.updated) : "—"}</small></div></article>`;
+      <div class="price"><div class="now">${(s.count ?? 0).toLocaleString("es-ES")}</div><small>${s.updated ? when(s.updated) : "—"}</small></div></div></article>`;
   }).join("");
-  const se = S.settings, yn = v => v === false ? "No" : "Sí";
-  $("settings").innerHTML = `<dt>Rebajas desde</dt><dd>${se.minDiscount ?? 20} %</dd>
-    <dt>Palabras clave</dt><dd>${esc((se.keywords || []).join(", ") || "—")}</dd>
-    <dt>Rebajas nuevas</dt><dd>${yn(se.notifyDeals)}</dd><dt>Campañas nuevas</dt><dd>${yn(se.notifyPromos)}</dd>
-    <dt>Bajadas de precio</dt><dd>${yn(se.notifyDrop)}</dd><dt>Precio objetivo</dt><dd>${yn(se.notifyTarget)}</dd><dt>Vuelta de stock</dt><dd>${yn(se.notifyStock)}</dd>`;
+  const se = S.settings;
+  $("s-min").value = se.minDiscount ?? 20;
+  $("s-kw").value = (se.keywords || []).join(", ");
+  $("s-deals").checked = se.notifyDeals !== false; $("s-promos").checked = se.notifyPromos !== false;
+  $("s-drop").checked = se.notifyDrop !== false; $("s-stock").checked = se.notifyStock !== false;
+  renderKeyState();
 }
+$("setForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const values = { minDiscount: parseInt($("s-min").value, 10) || 0, keywords: $("s-kw").value.split(",").map(x => x.trim().toLowerCase()).filter(Boolean),
+    notifyDeals: $("s-deals").checked, notifyPromos: $("s-promos").checked, notifyDrop: $("s-drop").checked, notifyStock: $("s-stock").checked };
+  $("setSave").disabled = true;
+  try { await dispatch("web.yml", { ops: JSON.stringify([{ op: "settings", values }]) }); S.settings = { ...S.settings, ...values }; $("setMsg").textContent = "Guardando… se aplica en un minuto."; }
+  catch (err) { $("setMsg").textContent = err.message; }
+  finally { $("setSave").disabled = false; }
+});
 
-/* arranque */
+/* ---------- repintado ---------- */
+function rerender() {
+  if (!$("p-buscar").hidden) search();
+  if (!$("p-ofertas").hidden) renderOffers();
+  if (!$("p-seguimiento").hidden) renderWatch();
+}
+document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("click", () => {
+  ({ buscar: search, ofertas: renderOffers, seguimiento: renderWatch, ajustes: renderSettings })[b.dataset.tab]();
+}));
+
+/* ---------- arranque ---------- */
 (async () => {
-  const get = async (f, d) => { try { const r = await fetch("data/" + f, { cache: "no-cache" }); return r.ok ? await r.json() : d; } catch { return d; } };
-  [S.catalog, S.promos, S.tracked, S.settings] = await Promise.all([
-    get("catalog.json", { items: [], stores: {} }), get("promos.json", { items: [] }), get("tracked.json", []), get("settings.json", {})]);
-  S.catalog.items = S.catalog.items || []; if (!Array.isArray(S.tracked)) S.tracked = [];
-  $("updated").textContent = S.catalog.updated ? `${S.catalog.items.length.toLocaleString("es-ES")} productos · actualizado ${when(S.catalog.updated)}` : "Todavía sin datos: la primera lectura tarda unos minutos";
+  [S.catalog, S.promos, S.wstate, S.watch, S.settings] = await Promise.all([
+    readFile("data", "catalog.json", { items: [], stores: {} }), readFile("data", "promos.json", { items: [] }),
+    readFile("data", "watch-state.json", {}), readFile("main", "config/watch.json", [], true), readFile("main", "config/settings.json", {}, true)]);
+  S.catalog.items = S.catalog.items || []; if (!Array.isArray(S.watch)) S.watch = [];
+  $("updated").textContent = S.catalog.updated
+    ? `${S.catalog.items.length.toLocaleString("es-ES")} productos · actualizado ${when(S.catalog.updated)} · se actualiza cada 2 h`
+    : "No se pudieron cargar los datos. Recarga la página.";
   storeChips($("sStores"), "sStore", search); storeChips($("dStores"), "dStore", renderOffers);
-  search(); renderOffers(); renderTracked(); renderStores();
+  search(); renderOffers(); renderWatch(); renderSettings();
 })();
 </script>
 </body>

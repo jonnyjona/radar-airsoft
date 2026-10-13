@@ -7,19 +7,15 @@ on:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 concurrency:
-  group: radar-data
+  group: radar-bot
   cancel-in-progress: false
 
 jobs:
   bot:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    environment:
-      name: github-pages
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
@@ -29,32 +25,13 @@ jobs:
           cache: pip
 
       - name: Instalar dependencias
-        run: pip install -r requirements.txt
+        run: pip install -q -r requirements.txt
 
       - name: Descargar datos guardados
         run: bash scripts/data-pull.sh
 
       - name: Responder mensajes
-        id: bot
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scraper/radar.py bot data
-
-      - name: Guardar datos
-        if: steps.bot.outputs.changed == 'true'
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: bash scripts/data-push.sh
-
-      - name: Preparar la web
-        if: steps.bot.outputs.changed == 'true'
-        run: bash scripts/build-site.sh
-
-      - uses: actions/upload-pages-artifact@v3
-        if: steps.bot.outputs.changed == 'true'
-        with:
-          path: _site
-
-      - if: steps.bot.outputs.changed == 'true'
-        uses: actions/deploy-pages@v4
+        run: python -u scraper/radar.py bot data

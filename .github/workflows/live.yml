@@ -3,14 +3,14 @@ name: Radar Airsoft (precio en vivo)
 on:
   workflow_dispatch:
     inputs:
-      query:
-        description: "Palabras clave"
+      url:
+        description: "Enlace del producto"
         required: true
       id:
         description: "Identificador de la petición (lo pone la web)"
         required: true
 
-run-name: "En vivo: ${{ inputs.query }}"
+run-name: "En vivo: ${{ inputs.url }}"
 
 permissions:
   contents: write
@@ -18,7 +18,7 @@ permissions:
 jobs:
   live:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,19 +34,13 @@ jobs:
       - name: Instalar dependencias
         run: pip install -q -r requirements.txt
 
-      - name: Descargar catálogo
-        run: |
-          mkdir -p data
-          git fetch --depth=1 origin data
-          git show FETCH_HEAD:catalog.json > data/catalog.json
-
-      - name: Leer precios ahora
+      - name: Leer el precio ahora
         env:
-          QUERY: ${{ inputs.query }}
+          URL: ${{ inputs.url }}
           REQ_ID: ${{ inputs.id }}
         run: |
           case "$REQ_ID" in (*[!a-z0-9]*|"") echo "id no válido"; exit 1;; esac
-          python -u scraper/radar.py live data "$QUERY" "$REQ_ID" result.json
+          python -u scraper/radar.py live "$URL" "$REQ_ID" result.json
 
       - name: Publicar resultado
         env:
