@@ -125,7 +125,7 @@ dt { color: var(--muted) } dd { margin: 0 }
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 1v6M12 17v6M1 12h6M17 12h6" stroke="currentColor" stroke-width="2"/></svg>
       <h1>Radar Airsoft</h1>
     </div>
-    <div class="updated" id="updated">Cargando datos…</div>
+    <div class="toolbar" style="gap:10px"><span class="updated" id="updated">Cargando datos…</span><button class="linkbtn" type="button" id="refreshNow">Actualizar ahora</button></div>
   </header>
 
   <form class="searchbar" id="sform" autocomplete="off" role="search">
@@ -600,15 +600,22 @@ document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("cl
   ({ buscar: search, ofertas: renderOffers, seguimiento: renderWatch, ajustes: renderSettings })[b.dataset.tab]();
 }));
 
+$("refreshNow").addEventListener("click", async () => {
+  try { await dispatch("radar.yml", {}); toast("Leyendo las tiendas. Tarda unos 5-15 minutos; luego recarga la página."); }
+  catch (e) { toast(e.message); }
+});
+
 /* ---------- arranque ---------- */
 (async () => {
   [S.catalog, S.promos, S.wstate, S.watch, S.settings] = await Promise.all([
     readFile("data", "catalog.json", { items: [], stores: {} }), readFile("data", "promos.json", { items: [] }),
     readFile("data", "watch-state.json", {}), readFile("main", "config/watch.json", [], true), readFile("main", "config/settings.json", {}, true)]);
   S.catalog.items = S.catalog.items || []; if (!Array.isArray(S.watch)) S.watch = [];
-  $("updated").textContent = S.catalog.updated
-    ? `${S.catalog.items.length.toLocaleString("es-ES")} productos · actualizado ${when(S.catalog.updated)} · se actualiza cada 2 h`
-    : "No se pudieron cargar los datos. Recarga la página.";
+  if (S.catalog.updated) {
+    const hours = (Date.now() - new Date(S.catalog.updated)) / 3600000;
+    $("updated").innerHTML = `${S.catalog.items.length.toLocaleString("es-ES")} productos · actualizado ${when(S.catalog.updated)}`
+      + (hours > 3 ? ` · <span style="color:var(--bad)">hace ${Math.floor(hours)} h</span>` : "");
+  } else $("updated").textContent = "No se pudieron cargar los datos. Recarga la página.";
   storeChips($("sStores"), "sStore", search); storeChips($("dStores"), "dStore", renderOffers);
   search(); renderOffers(); renderWatch(); renderSettings();
 })();

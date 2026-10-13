@@ -2,7 +2,8 @@ name: Radar Airsoft (tiendas)
 
 on:
   schedule:
-    - cron: "17 */2 * * *"   # cada 2 horas (GitHub puede retrasarlo unos minutos)
+    - cron: "17 */2 * * *"   # cada 2 horas; GitHub a veces se salta estas ejecuciones,
+                             # por eso también se lanza desde cron-job.org (ver README)
   workflow_dispatch:
   push:
     branches: [main]
